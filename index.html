@@ -220,7 +220,31 @@
             </div>
             
             <div id="servers-container" class="space-y-3">
-                <!-- Server links will be dynamically added here -->
+                {{range .Links}}
+                <div class="casual-light p-4 hover:shadow-md transition-all">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
+                                <i data-lucide="server" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800">{{.Flag}} {{.Name}}</p>
+                                <p class="text-sm text-gray-600">📍 Server</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="copyToClipboard('{{.URL}}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
+                                <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
+                            </button>
+                            <button onclick="showQRCode('{{.URL}}', '{{.Name}}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
+                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="text-center text-gray-500 py-8">No servers available</div>
+                {{end}}
             </div>
         </div>
 
@@ -228,7 +252,16 @@
         <div id="apps-section" class="casual-card p-6 hover-lift">
             <h3 class="text-xl font-bold text-gray-800 mb-6" data-i18n="supported_apps">📱 Supported Apps</h3>
             <div id="apps-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <!-- Apps will be dynamically added here -->
+                {{range .Apps}}
+                <div class="casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105">
+                    <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-{{.Color}}-400 to-{{.Color}}-600 rounded-lg flex items-center justify-center shadow">
+                        <i data-lucide="{{.Icon}}" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <p class="text-sm font-bold text-gray-800">{{.Name}}</p>
+                </div>
+                {{else}}
+                <div class="col-span-full text-center text-gray-500 py-8">No apps available</div>
+                {{end}}
             </div>
         </div>
     </main>
@@ -333,9 +366,7 @@
                 days_left: {{.User.DaysLeft}},
                 traffic_used_str: '{{.User.DataUsed}}',
                 traffic_limit_str: '{{.User.DataLimit}}',
-                subscription_url: '{{.SubscriptionUrl}}',
-                servers: [],
-                apps: []
+                subscription_url: '{{.SubscriptionUrl}}'
             };
             
             subscriptionData = data;
@@ -369,77 +400,6 @@
             // Update expiry info
             document.getElementById('expires-at').textContent = subscriptionData.expires_at || 'Unknown';
             document.getElementById('days-left').textContent = subscriptionData.days_left ? `${subscriptionData.days_left} days` : 'Unknown';
-            
-            // Update servers
-            displayServers(subscriptionData.servers);
-            
-            // Update apps
-            displayApps(subscriptionData.apps);
-        }
-        
-        function displayServers(servers) {
-            const container = document.getElementById('servers-container');
-            container.innerHTML = '';
-            
-            if (servers.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-8">No servers available</div>';
-                return;
-            }
-            
-            servers.forEach(server => {
-                const serverCard = document.createElement('div');
-                serverCard.className = 'casual-light p-4 hover:shadow-md transition-all';
-                serverCard.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
-                                <i data-lucide="server" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-800">${server.flag} ${server.name}</p>
-                                <p class="text-sm text-gray-600">📍 Server</p>
-                            </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="copyToClipboard('${server.fullUrl}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
-                                <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
-                            </button>
-                            <button onclick="showQRCode('${server.fullUrl}', '${server.name}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
-                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(serverCard);
-            });
-            
-            // Re-initialize icons
-            lucide.createIcons();
-        }
-        
-        function displayApps(apps) {
-            const container = document.getElementById('apps-container');
-            container.innerHTML = '';
-            
-            if (apps.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No apps available</div>';
-                return;
-            }
-            
-            apps.forEach(app => {
-                const appCard = document.createElement('div');
-                appCard.className = 'casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105';
-                appCard.innerHTML = `
-                    <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-${app.color || 'blue'}-400 to-${app.color || 'blue'}-600 rounded-lg flex items-center justify-center shadow">
-                        <i data-lucide="${app.icon || 'smartphone'}" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-800">${app.name || 'App'}</p>
-                `;
-                container.appendChild(appCard);
-            });
-            
-            // Re-initialize icons
-            lucide.createIcons();
         }
         
         // Progress bar calculation
@@ -449,6 +409,9 @@
             
             // Load from Go templates directly
             loadFromTemplate();
+            
+            // Initialize Lucide icons after DOM is ready
+            lucide.createIcons();
         });
         
         // Copy subscription link
