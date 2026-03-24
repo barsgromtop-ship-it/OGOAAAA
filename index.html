@@ -388,46 +388,43 @@
         // Load subscription data (same as original)
         async function loadSubscriptionData() {
             try {
-                // Try to get encoded panel data like in original
-                const encodedPanelData = '<%= panelData %>';
-                
-                // If this is literal text (not processed by server), try API
-                if (encodedPanelData === '<%= panelData %>') {
-                    await loadFromAPI();
-                    return;
-                }
-                
-                const decodedData = decodeAndParseData(encodedPanelData);
-                subscriptionData = formatApiData(decodedData);
-                updateUI();
+                // First try API endpoints directly
+                await loadFromAPI();
                 
             } catch (error) {
                 console.error('Data loading error:', error);
-                await loadFromAPI();
+                showErrorState();
             }
         }
         
         // Fallback to API loading
         async function loadFromAPI() {
             try {
-                // Try different endpoints
+                // Try different endpoints that Remnawave might use
                 const endpoints = [
                     '/api/user/info',
                     '/api/subscription',
                     '/user/info',
-                    '/subscription/info'
+                    '/subscription/info',
+                    '/api/sub',
+                    '/sub/info',
+                    '/panel/api/info',
+                    '/api/panel/info'
                 ];
                 
                 for (const endpoint of endpoints) {
                     try {
+                        console.log(`Trying endpoint: ${endpoint}`);
                         const response = await fetch(endpoint);
                         if (response.ok) {
                             const data = await response.json();
+                            console.log(`Success with ${endpoint}:`, data);
                             subscriptionData = formatApiData(data);
                             updateUI();
                             return;
                         }
                     } catch (e) {
+                        console.log(`Failed ${endpoint}:`, e.message);
                         continue;
                     }
                 }
