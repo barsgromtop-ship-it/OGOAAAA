@@ -321,137 +321,121 @@
             document.getElementById(`lang-${currentLanguage}`).classList.add('active');
         }
         
-        // Data loading from Remnawave API
+        // Data loading from Remnawave - similar to original example
         let subscriptionData = null;
         
-        // Load data from Remnawave API
-        async function loadSubscriptionData() {
+        // Decode and parse data (like in original)
+        function decodeAndParseData(encodedData) {
             try {
-                // Try to load from Remnawave API endpoint
-                const response = await fetch('/sub/{{.User.ID}}/info');
-                if (!response.ok) {
-                    throw new Error('API response not ok');
-                }
-                
-                const data = await response.json();
-                subscriptionData = processSubscriptionData(data);
-                updateUI();
+                return JSON.parse(atob(encodedData));
             } catch (error) {
-                console.error('Failed to load from API:', error);
-                // Try alternative endpoints
-                tryAlternativeEndpoints();
+                console.error('Error decoding/parsing data:', error);
+                throw new Error('Failed to process panel data: ' + error.message);
             }
         }
         
-        async function tryAlternativeEndpoints() {
-            const endpoints = [
-                '/api/user/info',
-                '/api/subscription',
-                '/user/info',
-                '/subscription/info'
-            ];
-            
-            for (const endpoint of endpoints) {
-                try {
-                    const response = await fetch(endpoint);
-                    if (response.ok) {
-                        const data = await response.json();
-                        subscriptionData = processSubscriptionData(data);
-                        updateUI();
-                        return;
-                    }
-                } catch (e) {
-                    continue;
-                }
-            }
-            
-            // If all endpoints fail, try to get data from page context
-            loadFromPageContext();
+        // Parse traffic values (same as original)
+        function parseTraffic(str) {
+            if (!str) return 0;
+            const match = str.match(/^([\d.]+)\s*(\w+)$/);
+            if (!match) return 0;
+            const val = parseFloat(match[1]);
+            const unit = match[2].toLowerCase();
+            const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
+            units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
+            return val * (units[unit] || 1);
         }
         
-        function processSubscriptionData(response) {
-            // Handle different API response formats
-            const user = response.user || response;
+        // Format API data (same as original)
+        function formatApiData(apiData) {
+            if (!apiData.response?.isFound) {
+                throw new Error('Подписка не найдена');
+            }
             
-            // Parse traffic values
-            function parseTraffic(trafficStr) {
-                if (!trafficStr) return 0;
-                const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
-                if (!match) return parseFloat(trafficStr) || 0;
-                const val = parseFloat(match[1]);
-                const unit = match[2].toLowerCase();
-                const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
-                units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
-                return val * (units[unit] || 1);
-            };
+            const { response } = apiData;
+            const { user } = response;
             
-            // Process servers/links
-            const servers = (response.links || response.servers || []).map(link => {
+            // Process servers/links (same as original)
+            const servers = (response.links || []).map(link => {
                 let serverName = 'Server';
                 let flag = '';
-                
-                if (typeof link === 'string') {
-                    const hashMatch = link.match(/#(.+)$/);
-                    if (hashMatch) {
-                        const hashPart = decodeURIComponent(hashMatch[1]);
-                        serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
-                        const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
-                        if (flagMatch) flag = flagMatch[0];
-                    }
-                    return { name: serverName, flag, fullUrl: link };
-                } else if (typeof link === 'object') {
-                    return {
-                        name: link.name || link.server || 'Server',
-                        flag: link.flag || '',
-                        fullUrl: link.url || link.link || link.fullUrl || ''
-                    };
+                const hashMatch = link.match(/#(.+)$/);
+                if (hashMatch) {
+                    const hashPart = decodeURIComponent(hashMatch[1]);
+                    serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
+                    const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
+                    if (flagMatch) flag = flagMatch[0];
                 }
-            }).filter(server => server.fullUrl);
+                return { name: serverName, flag, fullUrl: link };
+            });
             
             return {
-                username: user.username || user.name || '',
-                user_status: user.status || user.userStatus || 'active',
-                expires_at: user.expire || user.expiresAt || user.expiry || '',
-                days_left: user.days_left || user.daysLeft || 0,
-                traffic_used_str: user.traffic_used || user.dataUsed || '0 B',
-                traffic_limit_str: user.traffic_limit || user.dataLimit || 'Unlimited',
-                subscription_url: response.subscription_url || response.subscriptionUrl || '',
+                username: user.username,
+                user_status: user.userStatus,
+                expires_at: user.expiresAt,
+                days_left: user.daysLeft,
+                traffic_used: parseTraffic(user.trafficUsed),
+                traffic_limit: parseTraffic(user.trafficLimit),
+                traffic_used_str: user.trafficUsed || '0 B',
+                traffic_limit_str: user.trafficLimit || 'Unlimited',
+                traffic_reset_strategy: user.trafficLimitStrategy,
+                subscription_url: response.subscriptionUrl,
                 servers: servers,
-                apps: response.apps || []
+                apps: [] // Will be loaded separately
             };
         }
         
-        function loadFromPageContext() {
-            // Try to get data from global variables or page context
+        // Load subscription data (same as original)
+        async function loadSubscriptionData() {
             try {
-                // Check if data is available in global scope
-                if (window.userData) {
-                    subscriptionData = processSubscriptionData(window.userData);
-                    updateUI();
+                // Try to get encoded panel data like in original
+                const encodedPanelData = '<%= panelData %>';
+                
+                // If this is literal text (not processed by server), try API
+                if (encodedPanelData === '<%= panelData %>') {
+                    await loadFromAPI();
                     return;
                 }
                 
-                // Try to extract from page title or other elements
-                const title = document.querySelector('title')?.textContent || '';
-                const bodyText = document.body.textContent || '';
-                
-                // Create minimal data structure
-                subscriptionData = {
-                    username: 'User',
-                    user_status: 'active',
-                    expires_at: 'Unknown',
-                    days_left: 0,
-                    traffic_used_str: '0 B',
-                    traffic_limit_str: 'Unknown',
-                    subscription_url: window.location.href,
-                    servers: [],
-                    apps: []
-                };
-                
+                const decodedData = decodeAndParseData(encodedPanelData);
+                subscriptionData = formatApiData(decodedData);
                 updateUI();
+                
             } catch (error) {
-                console.error('Failed to load from page context:', error);
-                // Show error state
+                console.error('Data loading error:', error);
+                await loadFromAPI();
+            }
+        }
+        
+        // Fallback to API loading
+        async function loadFromAPI() {
+            try {
+                // Try different endpoints
+                const endpoints = [
+                    '/api/user/info',
+                    '/api/subscription',
+                    '/user/info',
+                    '/subscription/info'
+                ];
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        const response = await fetch(endpoint);
+                        if (response.ok) {
+                            const data = await response.json();
+                            subscriptionData = formatApiData(data);
+                            updateUI();
+                            return;
+                        }
+                    } catch (e) {
+                        continue;
+                    }
+                }
+                
+                throw new Error('No API endpoint available');
+                
+            } catch (error) {
+                console.error('API loading failed:', error);
                 showErrorState();
             }
         }
@@ -466,7 +450,7 @@
         }
         
         // Parse traffic values for progress bar
-        function parseTraffic(trafficStr) {
+        function parseTrafficForBar(trafficStr) {
             if (!trafficStr || trafficStr === '0 B' || trafficStr === 'Error') return 0;
             const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
             if (!match) return parseFloat(trafficStr) || 0;
@@ -479,13 +463,17 @@
         function updateUI() {
             if (!subscriptionData) return;
             
+            // Update service name and user status
+            document.getElementById('service-name').textContent = subscriptionData.username || 'Remnawave';
+            document.getElementById('user-status').textContent = subscriptionData.user_status === 'premium' ? '🌟 Premium' : '📱 Standard';
+            
             // Update traffic info
             document.getElementById('traffic-used-str').textContent = subscriptionData.traffic_used_str;
             document.getElementById('traffic-limit-str').textContent = subscriptionData.traffic_limit_str;
             
             // Update progress bar
-            const used = parseTraffic(subscriptionData.traffic_used_str);
-            const limit = parseTraffic(subscriptionData.traffic_limit_str);
+            const used = parseTrafficForBar(subscriptionData.traffic_used_str);
+            const limit = parseTrafficForBar(subscriptionData.traffic_limit_str);
             const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
             document.getElementById('traffic-progress-bar').style.width = percentage + '%';
             
@@ -495,9 +483,6 @@
             
             // Update servers dynamically
             updateServersDisplay();
-            
-            // Update apps dynamically
-            updateAppsDisplay();
         }
         
         function updateServersDisplay() {
@@ -532,26 +517,8 @@
                     container.appendChild(serverCard);
                 });
                 lucide.createIcons();
-            }
-        }
-        
-        function updateAppsDisplay() {
-            const container = document.getElementById('apps-container');
-            
-            if (subscriptionData.apps && subscriptionData.apps.length > 0) {
-                container.innerHTML = '';
-                subscriptionData.apps.forEach(app => {
-                    const appCard = document.createElement('div');
-                    appCard.className = 'casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105';
-                    appCard.innerHTML = `
-                        <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-${app.color || 'blue'}-400 to-${app.color || 'blue'}-600 rounded-lg flex items-center justify-center shadow">
-                            <i data-lucide="${app.icon || 'smartphone'}" class="w-6 h-6 text-white"></i>
-                        </div>
-                        <p class="text-sm font-bold text-gray-800">${app.name || 'App'}</p>
-                    `;
-                    container.appendChild(appCard);
-                });
-                lucide.createIcons();
+            } else {
+                container.innerHTML = '<div class="text-center text-gray-500 py-8">No servers available</div>';
             }
         }
         
@@ -560,7 +527,7 @@
             updateTranslations();
             updateLanguageButtons();
             
-            // Load from Remnawave API
+            // Load subscription data like in original
             loadSubscriptionData();
             
             // Initialize Lucide icons after DOM is ready
