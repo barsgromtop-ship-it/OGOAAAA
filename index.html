@@ -548,26 +548,137 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .power-button-container {
+            margin-top: 1rem;
+            border-radius: 1.25rem;
+            border: 1px solid var(--mono-border);
+            background: color-mix(in srgb, var(--mono-surface) 86%, transparent);
+            box-shadow: var(--mono-shadow);
+            padding: 1.25rem;
+        }
+
+        .power-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 999px;
+            margin: 1.25rem auto 0.75rem;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+            border: 1px solid var(--mono-border-strong);
+            background: radial-gradient(60% 60% at 30% 20%, color-mix(in srgb, var(--mono-text) 12%, transparent), transparent 60%),
+                        radial-gradient(80% 80% at 60% 70%, color-mix(in srgb, var(--mono-text) 6%, transparent), transparent 60%),
+                        var(--mono-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.10);
+            user-select: none;
+        }
+
+        html[data-brightness="dark"] .power-button {
+            box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+        }
+
+        .power-button:active { transform: scale(0.985); }
+
+        .power-button.active {
+            box-shadow: 0 24px 70px rgba(0,0,0,0.16);
+        }
+
+        html[data-brightness="dark"] .power-button.active {
+            box-shadow: 0 26px 78px rgba(0,0,0,0.70);
+        }
+
+        .power-symbol {
+            width: 54%;
+            height: 54%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .power-symbol::before {
+            content: '';
+            width: 8px;
+            height: 52%;
+            background: var(--mono-text);
+            position: absolute;
+            top: 0;
+            border-radius: 999px;
+        }
+
+        .power-symbol::after {
+            content: '';
+            width: 100%;
+            height: 100%;
+            border: 8px solid var(--mono-text);
+            border-radius: 999px;
+            position: absolute;
+            clip-path: inset(24% 0 0 0);
+        }
+
+        .power-panel {
+            border-top: 1px solid var(--mono-border);
+            padding-top: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .power-status {
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            color: var(--mono-text-2);
+            text-align: center;
+        }
+
+        .download-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 520px) {
+            .download-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .download-card {
+            border: 1px solid var(--mono-border);
+            border-radius: 1rem;
+            padding: 0.85rem;
+            background: var(--mono-surface);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .download-title { font-weight: 900; }
+        .download-subtitle { color: var(--mono-text-3); font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <div class="appbar">
-        <div class="appbar-inner">
-            <div class="title">
+    <main class="container" id="app" style="opacity:0;transition:opacity 0.25s ease;">
+        <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <div class="title" style="gap:0.75rem;">
                 <img id="branding-logo" class="hidden" alt="Logo" />
                 <div style="min-width:0">
                     <div class="appbar-title" data-i18n="page_title">Подписка</div>
-                    <div class="appbar-subtitle" id="appbar-subtitle">Статус и ссылки для подключения</div>
+                    <div class="appbar-subtitle" id="appbar-subtitle">Нажмите кнопку, чтобы добавить подписку в Hiddify/Clash/Happ</div>
                 </div>
             </div>
-            <button id="settings-button" class="btn btn-outlined btn-icon" title="Settings">
-                <span class="material-symbols-outlined">tune</span>
-            </button>
+            <div id="status-container" class="badge" style="display:flex;align-items:center;gap:0.5rem;">
+                <span id="status-dot" style="width:10px;height:10px;border-radius:999px;background:var(--mono-border-strong);"></span>
+                <span id="user-status">—</span>
+            </div>
         </div>
-    </div>
 
-    <main class="container">
-        <div id="loading-spinner" class="card" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <div id="loading-spinner" class="card" style="margin-top:1rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
             <div>
                 <div style="font-weight:800" data-i18n="loading_data">Загрузка данных подписки...</div>
                 <div class="card-subtitle">Подождите пару секунд</div>
@@ -575,237 +686,80 @@
             <div class="spinner"></div>
         </div>
 
-        <div id="error-message" class="card hidden">
+        <div id="error-message" class="card hidden" style="margin-top:1rem;">
             <h2 data-i18n="error_title">Ошибка</h2>
             <div id="error-text" class="card-subtitle"></div>
         </div>
 
-        <section id="status-section" class="section">
-            <div class="grid">
-                <div id="user-info-card" class="card hidden">
-                    <h2 data-i18n="user_info_title">Информация о пользователе</h2>
-                    <div class="card-subtitle">Ваш текущий статус подписки</div>
+        <div id="user-info-card" class="card hidden" style="margin-top:1rem;">
+            <h2 style="display:flex;align-items:baseline;gap:0.5rem;flex-wrap:wrap;">
+                <span>Добро пожаловать,</span>
+                <span id="username" style="font-weight:900;">—</span>
+            </h2>
+            <div class="card-subtitle">Статус, срок действия и трафик</div>
 
-                    <div style="margin-top:0.85rem">
-                        <div class="kv"><div class="k" data-i18n="username_label">Имя пользователя:</div><div class="v" id="display-username">—</div></div>
-                        <div class="kv"><div class="k" data-i18n="status_label">Статус:</div><div class="v"><span id="display-user-status" class="badge">—</span></div></div>
-                        <div class="kv"><div class="k" data-i18n="expires_at_label">Срок действия:</div><div class="v" id="display-expires-at">—</div></div>
-                        <div class="kv" id="days-left-field"><div class="k" data-i18n="days_left_label">Дней осталось:</div><div class="v" id="display-days-left">—</div></div>
-                        <div class="kv"><div class="k" data-i18n="traffic_label">Трафик:</div><div class="v" id="display-traffic">—</div></div>
-                        <div class="kv" id="traffic-reset-field"><div class="k" data-i18n="traffic_reset_strategy_label">Сброс трафика:</div><div class="v" id="display-traffic-reset-strategy">—</div></div>
+            <div class="grid" style="margin-top:1rem;">
+                <div class="card" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">
+                        <span style="color:var(--mono-text-3)">Срок действия подписки</span>
+                        <span id="days-left" style="font-weight:900;">—</span>
                     </div>
+                    <div id="expires-at" style="margin-top:0.5rem;font-size:1.1rem;font-weight:900;">—</div>
                 </div>
 
-                <div id="subscription-links-card" class="card hidden">
-                    <h2 data-i18n="subscription_links_title">Ссылки подписки</h2>
-                    <div class="card-subtitle">Скопируйте ссылку или откройте QR</div>
-
-                    <div class="flex flex-col gap-4 mt-4">
-                        <div class="server-card">
-                            <div class="server-header">
-                                <div class="server-info">
-                                    <span class="server-name" data-i18n="subscription_link_label">Ссылка подписки</span>
-                                </div>
-                                <div class="server-actions">
-                                    <button class="btn btn-tonal btn-icon" id="copy-subscription-btn" title="Copy">
-                                        <span class="material-symbols-outlined">content_copy</span>
-                                    </button>
-                                    <button class="btn btn-tonal btn-icon" id="qr-subscription-btn" title="QR">
-                                        <span class="material-symbols-outlined">qr_code_2</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="servers-container" class="flex flex-col gap-3"></div>
+                <div class="card" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">
+                        <span style="color:var(--mono-text-3)">Сброс трафика</span>
+                        <span id="traffic-strategy" style="font-weight:900;">—</span>
+                    </div>
+                    <div style="margin-top:0.5rem;display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">
+                        <span style="color:var(--mono-text-3)">Использовано трафика</span>
+                        <span id="traffic-used" style="font-weight:900;">—</span>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="apps-section" class="section hidden">
-            <div class="card">
-                <div id="apps-header">
-                    <h2 data-i18n="apps_title">Приложения</h2>
-                    <div class="card-subtitle">Подберём приложение под твою платформу</div>
-                    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
-                        <button id="platform-select-button" class="btn btn-outlined">
-                            <span class="material-symbols-outlined">devices</span>
-                            <span data-i18n="choose_platform_title">Выберите платформу</span>
-                            <span class="material-symbols-outlined">arrow_drop_down</span>
-                        </button>
-                    </div>
-                </div>
-                <div id="os-app-display" style="margin-top:1rem"></div>
+        <div class="power-button-container" id="power-container">
+            <div id="powerButton" class="power-button" role="button" tabindex="0" aria-label="Add subscription">
+                <div class="power-symbol"></div>
             </div>
-        </section>
+            <div class="power-panel">
+                <div class="power-status" id="powerStatus">СИСТЕМА ГОТОВА К ЗАПУСКУ</div>
+            </div>
+        </div>
 
-        <section id="links-section" class="section hidden">
-            <div class="card">
-                <h2 data-i18n="subscription_links_title">Ссылки подписки</h2>
-                <div class="card-subtitle">Дублирующий раздел для быстрого доступа</div>
-                <div style="margin-top:1rem" id="links-section-body"></div>
-            </div>
-        </section>
-
-        <section id="support-section" class="section hidden">
-            <div class="card">
-                <h2 data-i18n="nav_support">Поддержка</h2>
-                <div class="card-subtitle">Если что-то не работает — мы рядом</div>
-                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
-                    <button class="btn" onclick="openSupportUrl()">
-                        <span class="material-symbols-outlined">support_agent</span>
-                        <span data-i18n="nav_support">Поддержка</span>
-                    </button>
-                </div>
-            </div>
-        </section>
+        <input id="subscription-url" type="hidden" value="" />
     </main>
 
-    <div id="qrModal" class="modal" onclick="if(event.target===this) closeQRModal()">
+    <div id="modal" class="modal" onclick="if(event.target===this) closeDownloadModal()">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title" id="qr-modal-title">QR</div>
-                <span class="modal-close-button" onclick="closeQRModal()">&times;</span>
+                <div class="modal-title">Не открылось автоматически?</div>
+                <span class="modal-close-button" onclick="closeDownloadModal()">&times;</span>
             </div>
-            <div id="qr-code-container"></div>
-        </div>
-    </div>
-
-    <div id="copy-notification" class="copy-confirmation">
-        <span data-i18n="copied_to_clipboard">Скопировано в буфер обмена!</span>
-    </div>
-
-    <div id="settings-modal">
-        <div class="settings-content">
-            <div class="settings-header">
-                <h3 class="settings-title" data-i18n="settings_title">Настройки</h3>
-                <span class="settings-close material-symbols-outlined" onclick="closeSettingsModal()">close</span>
+            <div class="card-subtitle" style="margin-bottom:0.75rem;">
+                Установите приложение и затем повторите попытку.
             </div>
-
-            <div class="settings-section">
-                <span class="settings-label" data-i18n="language_label">Язык:</span>
-                <div id="language-buttons-container" class="settings-btn-group"></div>
-            </div>
-
-            <div class="settings-section">
-                <span class="settings-label" data-i18n="brightness_label">Яркость:</span>
-                <div class="settings-btn-group">
-                    <button class="settings-radio-btn" data-brightness="light" onclick="selectBrightness('light')">
-                        <span class="material-symbols-outlined">light_mode</span>
-                        <span data-i18n="light_mode">Светлая</span>
-                    </button>
-                    <button class="settings-radio-btn" data-brightness="dark" onclick="selectBrightness('dark')">
-                        <span class="material-symbols-outlined">dark_mode</span>
-                        <span data-i18n="dark_mode">Тёмная</span>
-                    </button>
-                    <button class="settings-radio-btn" data-brightness="auto" onclick="selectBrightness('auto')">
-                        <span class="material-symbols-outlined">brightness_auto</span>
-                        <span data-i18n="auto_mode">Авто</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="settings-section hidden">
-                <span class="settings-label" data-i18n="theme_label">Цветовая схема:</span>
-                <div class="settings-btn-group">
-                    <button class="settings-radio-btn active" data-palette="mono" onclick="selectPalette('mono')">
-                        <span class="material-symbols-outlined">palette</span>
-                        <span>Mono</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="navbar">
-        <div class="navbar-container">
-            <button id="navbar-status" class="navbar-item navbar-item-active" onclick="setPage('navbar-status','status-section');">
-                <span class="material-symbols-outlined">verified</span>
-                <span data-i18n="nav_status">Статус</span>
-            </button>
-            <button id="navbar-apps" class="navbar-item hidden" onclick="setPage('navbar-apps','apps-section');">
-                <span class="material-symbols-outlined">apps</span>
-                <span data-i18n="nav_apps">Приложения</span>
-            </button>
-            <button id="navbar-links" class="navbar-item" onclick="setPage('navbar-links','links-section');">
-                <span class="material-symbols-outlined">link</span>
-                <span data-i18n="nav_links">Ссылки</span>
-            </button>
-            <button id="navbar-support" class="navbar-item hidden" onclick="setPage('navbar-support','support-section');">
-                <span class="material-symbols-outlined">support_agent</span>
-                <span data-i18n="nav_support">Поддержка</span>
-            </button>
+            <div class="download-grid" id="downloadButtons"></div>
         </div>
     </div>
 
     <script>
-        let appsConfig = null;
-        let currentLanguage = 'ru';
         let currentBrightness = 'auto';
         let currentTheme = 'mono';
-        let currentSectionId = 'status-section';
-        window.supportUrl = '';
 
-        const availablePalettes = ['mono'];
-
-        const appIcons = {
-            android: `<span class="material-symbols-outlined">android</span>`,
-            ios: `<span class="material-symbols-outlined">phone_iphone</span>`,
-            windows: `<span class="material-symbols-outlined">desktop_windows</span>`,
-            macos: `<span class="material-symbols-outlined">laptop_mac</span>`,
-            linux: `<span class="material-symbols-outlined">terminal</span>`,
-            androidTV: `<span class="material-symbols-outlined">tv</span>`,
-            appleTV: `<span class="material-symbols-outlined">tv</span>`
-        };
-
-        const translations = {
-            ru: {
-                page_title: 'Подписка', loading_data: 'Загрузка данных подписки...', error_title: 'Ошибка',
-                user_info_title: 'Информация о пользователе', subscription_links_title: 'Ссылки подписки',
-                apps_title: 'Приложения', choose_platform_title: 'Выберите платформу',
-                username_label: 'Имя пользователя:', status_label: 'Статус:', expires_at_label: 'Срок действия:',
-                days_left_label: 'Дней осталось:', traffic_label: 'Трафик:', traffic_reset_strategy_label: 'Сброс трафика:',
-                subscription_link_label: 'Ссылка подписки', support_link_label: 'Ссылка поддержки', server_label: 'Сервер', copied_to_clipboard: 'Скопировано в буфер обмена!',
-                nav_status: 'Статус', nav_apps: 'Приложения', nav_links: 'Ссылки', nav_support: 'Поддержка', settings_title: 'Настройки',
-                theme_label: 'Цветовая схема:', brightness_label: 'Яркость:', language_label: 'Язык:',
-                light_mode: 'Светлая', dark_mode: 'Тёмная', auto_mode: 'Авто',
-                unlimited: 'Без лимита', permanent: 'Бессрочно', status_active: 'Активен', status_disabled: 'Отключен',
-                status_limited: 'Ограничен', status_expired: 'Истёк', reset_no_reset: 'Без сброса', reset_day: 'Ежедневно',
-                reset_week: 'Еженедельно', reset_month: 'Ежемесячно'
-            },
-            en: {
-                page_title: 'Subscription', loading_data: 'Loading subscription data...', error_title: 'Error',
-                user_info_title: 'User Information', subscription_links_title: 'Subscription Links',
-                apps_title: 'Applications', choose_platform_title: 'Choose Platform',
-                username_label: 'Username:', status_label: 'Status:', expires_at_label: 'Expires:',
-                days_left_label: 'Days left:', traffic_label: 'Traffic:', traffic_reset_strategy_label: 'Traffic reset:',
-                subscription_link_label: 'Subscription link', support_link_label: 'Support Link', server_label: 'Server', copied_to_clipboard: 'Copied to clipboard!',
-                nav_status: 'Status', nav_apps: 'Apps', nav_links: 'Links', nav_support: 'Support', settings_title: 'Settings',
-                theme_label: 'Color scheme:', brightness_label: 'Brightness:', language_label: 'Language:',
-                light_mode: 'Light', dark_mode: 'Dark', auto_mode: 'Auto',
-                unlimited: 'Unlimited', permanent: 'Permanent', status_active: 'Active', status_disabled: 'Disabled',
-                status_limited: 'Limited', status_expired: 'Expired', reset_no_reset: 'No reset', reset_day: 'Daily',
-                reset_week: 'Weekly', reset_month: 'Monthly'
-            }
-        };
-
-        function getRandomPalette() { return availablePalettes[Math.floor(Math.random() * availablePalettes.length)]; }
         function detectSystemTheme() { return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
         function getActualBrightness() { return currentBrightness === 'auto' ? detectSystemTheme() : currentBrightness; }
-        function detectSystemLanguage() { const lang = navigator.language || navigator.userLanguage; return lang?.startsWith('ru') ? 'ru' : 'en'; }
-        function getTranslation(key) { return (translations[currentLanguage] && translations[currentLanguage][key]) || key; }
 
         function initializeSettings() {
-            const savedLang = localStorage.getItem('lang');
-            currentLanguage = savedLang || detectSystemLanguage();
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme) {
                 const parts = savedTheme.split('-');
                 currentTheme = parts[0] || 'mono';
                 currentBrightness = parts[1] || 'auto';
             } else {
-                currentTheme = getRandomPalette();
+                currentTheme = 'mono';
                 currentBrightness = 'auto';
             }
             window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
@@ -818,507 +772,265 @@
             document.documentElement.setAttribute('data-brightness', brightness);
             const meta = document.getElementById('theme-color-meta');
             if (meta) meta.setAttribute('content', brightness === 'dark' ? '#0b0b0b' : '#ffffff');
-            highlightSettingsButtons();
         }
 
-        function highlightSettingsButtons() {
-            document.querySelectorAll('.settings-radio-btn[data-brightness]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.brightness === currentBrightness);
-            });
-            document.querySelectorAll('.settings-radio-btn[data-language]').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.language === currentLanguage);
-            });
-        }
-
-        function selectBrightness(mode) {
-            currentBrightness = mode;
-            localStorage.setItem('theme', `${currentTheme}-${currentBrightness}`);
-            updateTheme();
-        }
-
-        function selectPalette(palette) {
-            currentTheme = palette;
-            localStorage.setItem('theme', `${currentTheme}-${currentBrightness}`);
-            updateTheme();
-        }
-
-        function selectLanguage(lang) {
-            currentLanguage = lang;
-            localStorage.setItem('lang', lang);
-            applyTranslations();
-            highlightSettingsButtons();
-        }
-
-        function setPage(navbarItemId, sectionId) {
-            ['status-section', 'apps-section', 'links-section', 'support-section'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
-            document.getElementById(sectionId)?.classList.remove('hidden');
-
-            document.querySelectorAll('.navbar-item').forEach(item => {
-                item.classList.remove('navbar-item-active');
-            });
-            document.getElementById(navbarItemId)?.classList.add('navbar-item-active');
-
-            currentSectionId = sectionId;
-
-            if (sectionId === 'links-section') {
-                const body = document.getElementById('links-section-body');
-                const card = document.getElementById('subscription-links-card');
-                body.innerHTML = '';
-                if (card) body.appendChild(card.cloneNode(true));
-            }
-
-            if (sectionId === 'apps-section' && window.appsData) {
-                setTimeout(() => displayAppsSection(), 50);
-            }
-        }
-
-        window.setPage = setPage;
-
-        function applyTranslations() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                const translation = getTranslation(key);
-                el.textContent = translation;
-            });
-            updateDisplayedDataTranslations();
-        }
-
-        async function loadAppsConfig() {
-            if (appsConfig !== null) return appsConfig;
-            try {
-                const response = await fetch('/assets/app-config.json');
-                if (!response.ok) throw new Error('Config file not found');
-                const text = await response.text();
-                if (text.trim().startsWith('<')) throw new Error('Received HTML instead of JSON');
-                appsConfig = JSON.parse(text);
-                return appsConfig;
-            } catch (error) {
-                appsConfig = { platforms: {}, config: {} };
-                return appsConfig;
-            }
-        }
-
-        function setupLanguageSelector(config) {
-            const container = document.getElementById('language-buttons-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            const locales = ['en', 'ru'];
-            if (config?.config?.additionalLocales) {
-                config.config.additionalLocales.forEach(locale => {
-                    if (!locales.includes(locale)) locales.push(locale);
-                });
-            }
-
-            const langNames = { en: 'English', ru: 'Русский', fa: 'فارسی', zh: '中文' };
-
-            locales.forEach(lang => {
-                const button = document.createElement('button');
-                button.className = 'settings-radio-btn';
-                button.dataset.language = lang;
-                button.onclick = () => selectLanguage(lang);
-                button.innerHTML = `<span class="material-symbols-outlined">language</span><span>${langNames[lang] || lang}</span>`;
-                container.appendChild(button);
-            });
-
-            highlightSettingsButtons();
-        }
-
-        function decodeAndParseData(encodedData) {
-            try {
-                return JSON.parse(atob(encodedData));
-            } catch (error) {
-                throw new Error('Failed to process panel data: ' + error.message);
-            }
-        }
-
-        async function loadSubscriptionData() {
-            try {
-                const appsConfigPromise = loadAppsConfig();
-                const encodedPanelData = '<%= panelData %>';
-                const decodedData = decodeAndParseData(encodedPanelData);
-                const loadedAppsConfig = await appsConfigPromise;
-
-                setupLanguageSelector(loadedAppsConfig);
-                const formattedData = formatApiData(decodedData, loadedAppsConfig);
-                displayData(formattedData);
-            } catch (error) {
-                displayError('Ошибка при загрузке данных подписки: ' + error.message);
-            }
-        }
-
-        function formatDate(isoString) {
-            try {
-                const d = new Date(isoString);
-                return d.toLocaleDateString(currentLanguage === 'ru' ? 'ru-RU' : 'en-US', { year: 'numeric', month: 'short', day: '2-digit' });
-            } catch {
-                return isoString;
-            }
-        }
-
-        function formatApiData(apiData, appsConfig) {
-            if (!apiData.response?.isFound) throw new Error('Подписка не найдена');
-            const { response } = apiData;
-            const { user } = response;
-
-            const parseTraffic = (str) => {
-                if (!str) return 0;
-                const match = str.match(/^([\d.]+)\s*(\w+)$/);
-                if (!match) return 0;
-                const val = parseFloat(match[1]);
-                const unit = match[2].toLowerCase();
-                const units = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3, tb: 1024 ** 4, pb: 1024 ** 5 };
-                units.kib = units.kb; units.mib = units.mb; units.gib = units.gb; units.tib = units.tb; units.pib = units.pb;
-                return val * (units[unit] || 1);
-            };
-
-            const servers = (response.links || []).map(link => {
-                let serverName = getTranslation('server_label');
-                let flag = '';
-                const hashMatch = link.match(/#(.+)$/);
-                if (hashMatch) {
-                    const hashPart = decodeURIComponent(hashMatch[1]);
-                    serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
-                    const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
-                    if (flagMatch) flag = flagMatch[0];
-                }
-                return { name: serverName, flag, fullUrl: link };
-            });
-
-            return {
-                username: user.username,
-                user_status: user.userStatus,
-                expires_at: user.expiresAt,
-                days_left: user.daysLeft,
-                traffic_used: parseTraffic(user.trafficUsed),
-                traffic_limit: parseTraffic(user.trafficLimit),
-                traffic_used_str: user.trafficUsed || '0 B',
-                traffic_limit_str: user.trafficLimit || getTranslation('unlimited'),
-                traffic_reset_strategy: user.trafficLimitStrategy,
-                subscription_url: response.subscriptionUrl,
-                cryptoLink: response.happ?.cryptoLink,
-                servers,
-                apps: appsConfig
-            };
-        }
-
-        function applyBranding(appsConfig) {
-            const branding = appsConfig?.config?.branding;
-            if (!branding) return;
-
-            if (branding.logoUrl) {
-                const logoEl = document.getElementById('branding-logo');
-                if (logoEl) {
-                    logoEl.onload = () => {
-                        logoEl.classList.remove('hidden');
-                        logoEl.style.display = 'inline-block';
-                        logoEl.style.visibility = 'visible';
-                    };
-                    logoEl.onerror = () => {
-                        logoEl.classList.add('hidden');
-                        logoEl.style.display = 'none';
-                    };
-                    logoEl.src = branding.logoUrl;
-                }
-            }
-
-            if (branding.supportUrl) {
-                window.supportUrl = branding.supportUrl;
-                const supportNavBtn = document.getElementById('navbar-support');
-                if (supportNavBtn) supportNavBtn.classList.remove('hidden');
-
-                setTimeout(() => {
-                    const subscriptionCard = document.getElementById('subscription-links-card');
-                    const linksContainer = subscriptionCard?.querySelector('.flex.flex-col.gap-4.mt-4');
-                    if (linksContainer && !linksContainer.querySelector('[data-support-link]')) {
-                        const supportCard = document.createElement('div');
-                        supportCard.className = 'server-card';
-                        supportCard.setAttribute('data-support-link', 'true');
-                        supportCard.innerHTML = `
-                            <div class="server-header">
-                                <div class="server-info">
-                                    <span class="server-name" data-i18n="support_link_label">${getTranslation('support_link_label')}</span>
-                                </div>
-                                <div class="server-actions">
-                                    <button class="btn btn-tonal btn-icon" onclick="copyToClipboard('${branding.supportUrl}')">
-                                        <span class="material-symbols-outlined">content_copy</span>
-                                    </button>
-                                    <button class="btn btn-tonal btn-icon" onclick="showQRCode('${branding.supportUrl}', getTranslation('support_link_label') || 'Support Link')">
-                                        <span class="material-symbols-outlined">qr_code_2</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        linksContainer.appendChild(supportCard);
-                    }
-                }, 100);
-            }
-        }
-
-        function displayError(message) {
+        function showError(message) {
             document.getElementById('loading-spinner')?.classList.add('hidden');
             const err = document.getElementById('error-message');
             const txt = document.getElementById('error-text');
             if (txt) txt.textContent = message;
             if (err) err.classList.remove('hidden');
+            const app = document.getElementById('app');
+            if (app) app.style.opacity = '1';
         }
 
-        function displayData(data) {
-            document.getElementById('loading-spinner')?.classList.add('hidden');
+        function getStatusText(status) {
+            switch (status) {
+                case 'ACTIVE': return 'Активна';
+                case 'DISABLED': return 'Неактивна';
+                case 'LIMITED': return 'Ограничена';
+                case 'EXPIRED': return 'Истекла';
+                default: return status || '—';
+            }
+        }
 
-            window.currentUserStatus = data.user_status;
-            window.currentExpiresAt = data.expires_at;
-            window.currentTrafficData = {
-                used: data.traffic_used,
-                limit: data.traffic_limit,
-                used_str: data.traffic_used_str,
-                limit_str: data.traffic_limit_str
+        function getTrafficStrategyText(strategy) {
+            switch (strategy) {
+                case 'NO_RESET': return 'Никогда';
+                case 'DAY': return 'Ежедневно';
+                case 'WEEK': return 'Еженедельно';
+                case 'MONTH': return 'Ежемесячно';
+                default: return strategy || '—';
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString || '—';
+            return date.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function parseTrafficValue(trafficStr) {
+            if (!trafficStr) return 0;
+            const matches = String(trafficStr).match(/^([\d.]+)\s*(B|KiB|MiB|GiB|TiB|KB|MB|GB|TB)$/i);
+            if (!matches) return 0;
+            const value = parseFloat(matches[1]);
+            const unit = matches[2].toUpperCase();
+            switch (unit) {
+                case 'B': return value;
+                case 'KIB':
+                case 'KB': return value * 1024;
+                case 'MIB':
+                case 'MB': return value * 1024 * 1024;
+                case 'GIB':
+                case 'GB': return value * 1024 * 1024 * 1024;
+                case 'TIB':
+                case 'TB': return value * 1024 * 1024 * 1024 * 1024;
+                default: return 0;
+            }
+        }
+
+        function formatTraffic(bytesOrStr) {
+            if (!bytesOrStr) return '0 GiB';
+            if (typeof bytesOrStr === 'string' && /GiB/i.test(bytesOrStr)) return bytesOrStr;
+            const bytes = typeof bytesOrStr === 'string' ? parseTrafficValue(bytesOrStr) : Number(bytesOrStr);
+            if (!bytes || isNaN(bytes)) return '0 GiB';
+            const GiB = 1024 * 1024 * 1024;
+            return (bytes / GiB).toFixed(2) + ' GiB';
+        }
+
+        function setStatusBadge(status) {
+            const container = document.getElementById('status-container');
+            const dot = document.getElementById('status-dot');
+            const textEl = document.getElementById('user-status');
+            const normalized = String(status || '').toUpperCase();
+
+            if (textEl) textEl.textContent = getStatusText(normalized);
+            if (!dot || !container) return;
+
+            const colorMap = {
+                ACTIVE: 'color-mix(in srgb, var(--mono-text) 75%, transparent)',
+                LIMITED: 'color-mix(in srgb, var(--mono-text) 55%, transparent)',
+                DISABLED: 'color-mix(in srgb, var(--color-error) 70%, transparent)',
+                EXPIRED: 'color-mix(in srgb, var(--color-error) 70%, transparent)'
             };
-            window.currentTrafficResetStrategy = data.traffic_reset_strategy;
-            window.subscriptionUrlForCopy = data.subscription_url;
 
-            applyBranding(data.apps);
-
-            document.getElementById('display-username').textContent = data.username || '—';
-
-            const userInfoCard = document.getElementById('user-info-card');
-            userInfoCard?.classList.remove('hidden');
-            document.getElementById('subscription-links-card')?.classList.remove('hidden');
-
-            const copyBtn = document.getElementById('copy-subscription-btn');
-            const qrBtn = document.getElementById('qr-subscription-btn');
-            if (copyBtn) copyBtn.onclick = () => copyToClipboard(window.subscriptionUrlForCopy);
-            if (qrBtn) qrBtn.onclick = () => showQRCode(window.subscriptionUrlForCopy, getTranslation('subscription_link_label'));
-
-            displayServers(data.servers);
-
-            if (data.user_status === 'ACTIVE' && data.apps?.platforms) {
-                const platforms = data.apps.platforms;
-                const hasApps = Object.keys(platforms).some(p => platforms[p]?.length > 0);
-                if (hasApps) {
-                    window.appsData = data;
-                    document.getElementById('navbar-apps')?.classList.remove('hidden');
-                } else {
-                    document.getElementById('navbar-apps')?.classList.add('hidden');
-                }
-            } else {
-                document.getElementById('navbar-apps')?.classList.add('hidden');
-            }
-
-            applyTranslations();
+            dot.style.background = colorMap[normalized] || 'var(--mono-border-strong)';
         }
 
-        function updateDisplayedDataTranslations() {
-            const statusEl = document.getElementById('display-user-status');
-            if (statusEl && window.currentUserStatus) {
-                const statusKey = `status_${String(window.currentUserStatus).toLowerCase()}`;
-                statusEl.textContent = getTranslation(statusKey);
-                statusEl.className = `badge badge-${String(window.currentUserStatus).toLowerCase()}`;
-            }
-
-            const expiresEl = document.getElementById('display-expires-at');
-            if (expiresEl && window.currentExpiresAt) {
-                const isPermanent = new Date(window.currentExpiresAt).getFullYear() >= 2099;
-                expiresEl.textContent = isPermanent ? getTranslation('permanent') : formatDate(window.currentExpiresAt);
-                const daysField = document.getElementById('days-left-field');
-                if (daysField) daysField.style.display = isPermanent ? 'none' : 'flex';
-            }
-
-            const daysLeftEl = document.getElementById('display-days-left');
-            if (daysLeftEl && window.appsData) daysLeftEl.textContent = window.appsData.days_left;
-
-            const trafficEl = document.getElementById('display-traffic');
-            if (trafficEl && window.currentTrafficData) {
-                const isUnlimited = window.currentTrafficData.limit === 0;
-                trafficEl.textContent = isUnlimited ? getTranslation('unlimited') : `${window.currentTrafficData.used_str} / ${window.currentTrafficData.limit_str}`;
-                const resetField = document.getElementById('traffic-reset-field');
-                if (resetField) resetField.style.display = isUnlimited ? 'none' : 'flex';
-            }
-
-            const resetEl = document.getElementById('display-traffic-reset-strategy');
-            if (resetEl && window.currentTrafficResetStrategy) {
-                resetEl.textContent = getTranslation(`reset_${String(window.currentTrafficResetStrategy).toLowerCase()}`);
-            }
+        function detectPlatform() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes('android')) return 'android';
+            if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) return 'ios';
+            if (ua.includes('win')) return 'windows';
+            if (ua.includes('mac')) return 'macos';
+            if (ua.includes('linux')) return 'linux';
+            return 'unknown';
         }
 
-        function copyToClipboard(text) {
-            if (!text) return;
-            navigator.clipboard?.writeText(text).then(() => {
-                const n = document.getElementById('copy-notification');
-                n?.classList.add('show');
-                setTimeout(() => n?.classList.remove('show'), 1400);
-            }).catch(() => {});
-        }
+        function getDownloadButtons(platform) {
+            const common = {
+                windows: { name: 'Happ Desktop', note: 'Windows', url: 'https://github.com/Happ-proxy/happ-desktop/releases/' },
+                macos: { name: 'Happ Desktop', note: 'macOS', url: 'https://github.com/Happ-proxy/happ-desktop/releases/' },
+                linux: { name: 'Happ Desktop', note: 'Linux', url: 'https://github.com/Happ-proxy/happ-desktop/releases/' },
+                android: { name: 'Happ', note: 'Android', url: 'https://github.com/Happ-proxy/happ-android/releases/' },
+                ios: { name: 'Happ', note: 'iOS', url: 'https://apps.apple.com/' },
+                unknown: { name: 'Happ Desktop', note: 'GitHub Releases', url: 'https://github.com/Happ-proxy/happ-desktop/releases/' }
+            };
 
-        function showQRCode(text, title) {
-            if (!text) return;
-            const modal = document.getElementById('qrModal');
-            const container = document.getElementById('qr-code-container');
-            const titleEl = document.getElementById('qr-modal-title');
-            if (titleEl) titleEl.textContent = title || 'QR';
-            if (container) container.innerHTML = '';
-            modal?.classList.add('active');
-            if (container && window.QRCode) {
-                new QRCode(container, { text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
-            }
-        }
+            const primary = common[platform] || common.unknown;
+            const alt = common.windows;
 
-        function closeQRModal() {
-            document.getElementById('qrModal')?.classList.remove('active');
-        }
+            const items = [primary];
+            if (platform !== 'windows') items.push(alt);
 
-        function openSettingsModal() {
-            document.getElementById('settings-modal')?.classList.add('active');
-            highlightSettingsButtons();
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settings-modal')?.classList.remove('active');
-        }
-
-        function openSupportUrl() {
-            if (!window.supportUrl) return;
-            try {
-                window.Telegram?.WebApp?.openLink?.(window.supportUrl);
-            } catch {}
-            window.open(window.supportUrl, '_blank', 'noopener,noreferrer');
-        }
-
-        function displayServers(servers) {
-            const container = document.getElementById('servers-container');
-            if (!container) return;
-            container.innerHTML = '';
-
-            (servers || []).forEach((server) => {
-                const card = document.createElement('div');
-                card.className = 'server-card';
-                card.innerHTML = `
-                    <div class="server-header">
-                        <div class="server-info">
-                            <span class="server-flag">${server.flag || ''}</span>
-                            <span class="server-name">${server.name || getTranslation('server_label')}</span>
-                        </div>
-                        <div class="server-actions"></div>
+            return items.map(item => {
+                const icon = item.note === 'Android' ? 'android' : (item.note === 'iOS' ? 'phone_iphone' : 'desktop_windows');
+                return `
+                    <div class="download-card">
+                        <div class="download-title">${item.name}</div>
+                        <div class="download-subtitle">${item.note}</div>
+                        <a class="btn" href="${item.url}" target="_blank" rel="noopener noreferrer">
+                            <span class="material-symbols-outlined">${icon}</span>
+                            <span>Скачать</span>
+                        </a>
                     </div>
                 `;
-
-                const copyBtn = document.createElement('button');
-                copyBtn.className = 'btn btn-tonal btn-icon';
-                copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
-                copyBtn.onclick = () => copyToClipboard(server.fullUrl);
-
-                const qrBtn = document.createElement('button');
-                qrBtn.className = 'btn btn-tonal btn-icon';
-                qrBtn.innerHTML = '<span class="material-symbols-outlined">qr_code_2</span>';
-                qrBtn.onclick = () => showQRCode(server.fullUrl, `QR: ${server.flag || ''} ${server.name || ''}`);
-
-                card.querySelector('.server-actions')?.append(copyBtn, qrBtn);
-                container.appendChild(card);
-            });
+            }).join('');
         }
 
-        function displayAppsSection() {
-            const data = window.appsData;
-            if (!data?.apps?.platforms) {
-                const display = document.getElementById('os-app-display');
-                if (display) display.innerHTML = '';
+        function openDownloadModal(platform) {
+            const modal = document.getElementById('modal');
+            const buttons = document.getElementById('downloadButtons');
+            if (buttons) buttons.innerHTML = getDownloadButtons(platform);
+            modal?.classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('modal')?.classList.remove('active');
+        }
+
+        window.closeDownloadModal = closeDownloadModal;
+
+        function handlePowerClick() {
+            const powerButton = document.getElementById('powerButton');
+            const powerStatus = document.getElementById('powerStatus');
+            const subscriptionUrl = document.getElementById('subscription-url')?.value || '';
+
+            if (!subscriptionUrl) {
+                showError('Ссылка подписки не найдена');
                 return;
             }
 
-            const platforms = data.apps.platforms;
-            const availablePlatforms = Object.keys(platforms).filter(p => platforms[p]?.length > 0);
-            if (availablePlatforms.length === 0) return;
+            powerButton?.classList.add('active');
+            if (powerStatus) powerStatus.textContent = 'АКТИВАЦИЯ...';
 
-            let currentPlatform = availablePlatforms[0];
-            const ua = navigator.userAgent;
-            if (/windows/i.test(ua) && availablePlatforms.includes('windows')) currentPlatform = 'windows';
-            else if (/macintosh|mac os x/i.test(ua) && availablePlatforms.includes('macos')) currentPlatform = 'macos';
-            else if (/linux/i.test(ua) && !/android/i.test(ua) && availablePlatforms.includes('linux')) currentPlatform = 'linux';
-            else if (/android/i.test(ua)) currentPlatform = availablePlatforms.includes('android') ? 'android' : currentPlatform;
-            else if (/iPad|iPhone|iPod/.test(ua) && availablePlatforms.includes('ios')) currentPlatform = 'ios';
+            const primaryUrl = `happ://add/${subscriptionUrl}`;
+            const platform = detectPlatform();
 
-            const platformSelectButton = document.getElementById('platform-select-button');
-            const platformNames = { ios: 'iOS', android: 'Android', windows: 'Windows', macos: 'macOS', linux: 'Linux', androidTV: 'Android TV', appleTV: 'Apple TV' };
+            window.location.href = primaryUrl;
 
-            const selectPlatform = (platform) => {
-                const display = document.getElementById('os-app-display');
-                currentPlatform = platform;
-                if (platformSelectButton) {
-                    platformSelectButton.innerHTML = `<span class="material-symbols-outlined">devices</span>${appIcons[platform] || ''}<span>${platformNames[platform] || platform}</span><span class="material-symbols-outlined">arrow_drop_down</span>`;
-                }
-
-                if (!display) return;
-                display.innerHTML = '';
-                const apps = platforms[platform] || [];
-                apps.forEach(app => {
-                    const el = document.createElement('div');
-                    el.className = 'server-card';
-                    el.innerHTML = `
-                        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;width:100%">
-                            <div style="min-width:0">
-                                <div style="font-weight:800">${app?.name || 'App'}</div>
-                                <div style="color:var(--mono-text-3);font-size:0.9rem">${app?.description || ''}</div>
-                            </div>
-                            <div style="display:flex;gap:0.5rem;flex-shrink:0">
-                                ${app?.downloadUrl ? `<a class="btn" href="${app.downloadUrl}" target="_blank" rel="noopener noreferrer"><span class="material-symbols-outlined">download</span><span data-i18n="download_app">Download</span></a>` : ''}
-                            </div>
-                        </div>
-                    `;
-                    display.appendChild(el);
-                });
-
-                applyTranslations();
-            };
-
-            platformSelectButton.onclick = () => {
-                const modal = document.createElement('div');
-                modal.className = 'modal active';
-                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-                const content = document.createElement('div');
-                content.className = 'modal-content';
-                content.innerHTML = `
-                    <div class="modal-header">
-                        <div class="modal-title">${getTranslation('choose_platform_title')}</div>
-                        <span class="modal-close-button">&times;</span>
-                    </div>
-                    <div class="flex flex-col gap-2" id="platform-list"></div>
-                `;
-                content.querySelector('.modal-close-button').onclick = () => modal.remove();
-
-                const list = content.querySelector('#platform-list');
-                availablePlatforms.forEach(p => {
-                    const b = document.createElement('button');
-                    b.className = 'btn btn-outlined';
-                    b.style.justifyContent = 'space-between';
-                    b.innerHTML = `<span style="display:flex;align-items:center;gap:0.5rem">${appIcons[p] || ''}<span>${platformNames[p] || p}</span></span><span class="material-symbols-outlined">chevron_right</span>`;
-                    b.onclick = () => { selectPlatform(p); modal.remove(); };
-                    list.appendChild(b);
-                });
-
-                modal.appendChild(content);
-                document.body.appendChild(modal);
-            };
-
-            selectPlatform(currentPlatform);
+            setTimeout(() => {
+                openDownloadModal(platform);
+                if (powerStatus) powerStatus.textContent = 'СИСТЕМА ГОТОВА К ЗАПУСКУ';
+                powerButton?.classList.remove('active');
+            }, 1000);
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initializeSettings();
-            applyTranslations();
-            updateTheme();
-            loadSubscriptionData();
-            document.getElementById('settings-button')?.addEventListener('click', openSettingsModal);
-        });
+        function applyBrandingFromAppsConfig(config) {
+            const branding = config?.config?.branding;
+            if (!branding) return;
+            if (branding.logoUrl) {
+                const logoEl = document.getElementById('branding-logo');
+                if (logoEl) {
+                    logoEl.onload = () => { logoEl.classList.remove('hidden'); };
+                    logoEl.onerror = () => { logoEl.classList.add('hidden'); };
+                    logoEl.src = branding.logoUrl;
+                }
+            }
+        }
 
-        window.copyToClipboard = copyToClipboard;
-        window.showQRCode = showQRCode;
-        window.closeQRModal = closeQRModal;
-        window.openSettingsModal = openSettingsModal;
-        window.closeSettingsModal = closeSettingsModal;
-        window.openSupportUrl = openSupportUrl;
-        window.selectPalette = selectPalette;
-        window.selectBrightness = selectBrightness;
-        window.selectLanguage = selectLanguage;
+        async function loadAppsConfig() {
+            try {
+                const response = await fetch('/assets/app-config.json');
+                if (!response.ok) return null;
+                const text = await response.text();
+                if (text.trim().startsWith('<')) return null;
+                return JSON.parse(text);
+            } catch {
+                return null;
+            }
+        }
+
+        function normalizePanelData(panelData) {
+            if (panelData && panelData.response && typeof panelData.response === 'object') return panelData.response;
+            return panelData;
+        }
+
+        function renderData(data) {
+            const normalized = normalizePanelData(data);
+
+            if (!normalized || (normalized.isFound !== undefined && !normalized.isFound)) {
+                showError('Данные не найдены');
+                return;
+            }
+
+            const user = normalized.user || {};
+
+            document.getElementById('loading-spinner')?.classList.add('hidden');
+            document.getElementById('user-info-card')?.classList.remove('hidden');
+
+            const usernameEl = document.getElementById('username');
+            if (usernameEl) usernameEl.textContent = user.username || 'Пользователь';
+
+            setStatusBadge(user.userStatus);
+
+            const expiresAtEl = document.getElementById('expires-at');
+            if (expiresAtEl) expiresAtEl.textContent = formatDate(user.expiresAt);
+
+            const daysLeftEl = document.getElementById('days-left');
+            if (daysLeftEl) daysLeftEl.textContent = user.daysLeft !== undefined ? `${user.daysLeft} дн.` : '—';
+
+            const trafficStrategyEl = document.getElementById('traffic-strategy');
+            if (trafficStrategyEl) trafficStrategyEl.textContent = getTrafficStrategyText(user.trafficLimitStrategy);
+
+            const trafficUsedEl = document.getElementById('traffic-used');
+            if (trafficUsedEl) trafficUsedEl.textContent = `${formatTraffic(user.trafficUsed)} / ${user.trafficLimit || '∞'}`;
+
+            if (normalized.subscriptionUrl) {
+                const subUrlEl = document.getElementById('subscription-url');
+                if (subUrlEl) subUrlEl.value = normalized.subscriptionUrl;
+            }
+
+            const app = document.getElementById('app');
+            if (app) app.style.opacity = '1';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            initializeSettings();
+            updateTheme();
+
+            const powerButton = document.getElementById('powerButton');
+            powerButton?.addEventListener('click', handlePowerClick);
+            powerButton?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handlePowerClick();
+                }
+            });
+
+            const appsConfig = await loadAppsConfig();
+            applyBrandingFromAppsConfig(appsConfig);
+
+            let panelData = '<%- panelData %>';
+            try {
+                panelData = JSON.parse(atob(panelData));
+                if (panelData && panelData.response) renderData(panelData);
+                else renderData(panelData);
+            } catch (error) {
+                showError('Ошибка обработки данных: ' + error.message);
+            }
+        });
     </script>
 
     <script type="module" defer>
