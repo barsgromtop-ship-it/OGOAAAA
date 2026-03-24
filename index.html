@@ -3,361 +3,977 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Profile.Configuration.Name}} - Subscription</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- QR Code Library CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    
+    <meta name="theme-color" content="#FFFFFF" id="theme-color-meta">
+    <meta name="description" content="<%= metaDescription %>" />
+    <title><%= metaTitle %></title>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script>
+        const fontLinks = [
+            {
+                name: "Inter",
+                urls: [
+                    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
+                    "https://fonts.font.im/css2?family=Inter:wght@400;500;600;700&display=swap",
+                    "https://fonts.w.tools/css2?family=Inter:wght@400;500;600;700&display=swap"
+                ]
+            },
+            {
+                name: "Material Symbols Outlined",
+                urls: [
+                    "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200",
+                    "https://fonts.font.im/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200",
+                    "https://fonts.w.tools/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,200..700,0..1,-50..200"
+                ]
+            }
+        ];
+
+        fontLinks.forEach(font => {
+            let index = 0;
+            const tryLoad = () => {
+                if (index >= font.urls.length) return;
+                const link = document.createElement("link");
+                link.rel = "stylesheet";
+                link.href = font.urls[index];
+                link.onload = () => {};
+                link.onerror = () => { index++; tryLoad(); };
+                document.head.appendChild(link);
+            };
+            tryLoad();
+        });
+    </script>
+
+    <script>
+        const cdns = [
+            "https://cdn.tailwindcss.com",
+            "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4",
+            "https://cdn.tailwindcss.com"
+        ];
+
+        function loadScript(src, onSuccess, onError) {
+            const script = document.createElement("script");
+            script.src = src;
+            script.onload = onSuccess;
+            script.onerror = onError;
+            document.head.appendChild(script);
+        }
+
+        function tryLoadCDNs(index = 0) {
+            if (index >= cdns.length) return;
+            loadScript(cdns[index], () => {}, () => tryLoadCDNs(index + 1));
+        }
+
+        tryLoadCDNs();
+    </script>
+
+    <script>
+        const cdnList = [
+            "https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js",
+            "https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js",
+            "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+        ];
+
+        let index = 0;
+
+        function tryLoadScript() {
+            if (index >= cdnList.length) return;
+            const script = document.createElement("script");
+            script.src = cdnList[index];
+            script.onload = () => {};
+            script.onerror = () => { index++; tryLoadScript(); };
+            document.head.appendChild(script);
+        }
+
+        tryLoadScript();
+    </script>
+
     <style>
-        /* Casual Style */
-        .casual-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 20px;
+        :root {
+            --mono-bg: #ffffff;
+            --mono-surface: #ffffff;
+            --mono-surface-2: #f6f6f6;
+            --mono-border: rgba(0, 0, 0, 0.12);
+            --mono-border-strong: rgba(0, 0, 0, 0.20);
+            --mono-text: #0b0b0b;
+            --mono-text-2: rgba(0, 0, 0, 0.72);
+            --mono-text-3: rgba(0, 0, 0, 0.55);
+            --mono-inverse-bg: #0b0b0b;
+            --mono-inverse-text: #ffffff;
+            --mono-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
+            --mono-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.10);
+
+            --color-primary: #0b0b0b;
+            --color-on-primary: #ffffff;
+            --color-primary-container: #f0f0f0;
+            --color-on-primary-container: #0b0b0b;
+
+            --color-secondary: #1c1c1c;
+            --color-on-secondary: #ffffff;
+            --color-secondary-container: #ededed;
+            --color-on-secondary-container: #0b0b0b;
+
+            --color-surface: var(--mono-surface);
+            --color-surface-variant: var(--mono-surface-2);
+            --color-on-surface: var(--mono-text);
+            --color-outline: var(--mono-border);
+            --color-outline-variant: var(--mono-border-strong);
+
+            --color-error: #c30000;
+            --color-error-container: #ffe7e7;
+            --color-on-error-container: #290000;
+
+            --color-inverse-surface: var(--mono-inverse-bg);
+            --color-inverse-on-surface: var(--mono-inverse-text);
         }
-        
-        .casual-light {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            border-radius: 16px;
+
+        html[data-brightness="dark"] {
+            --mono-bg: #0b0b0b;
+            --mono-surface: #121212;
+            --mono-surface-2: #171717;
+            --mono-border: rgba(255, 255, 255, 0.12);
+            --mono-border-strong: rgba(255, 255, 255, 0.18);
+            --mono-text: #ffffff;
+            --mono-text-2: rgba(255, 255, 255, 0.80);
+            --mono-text-3: rgba(255, 255, 255, 0.62);
+            --mono-inverse-bg: #ffffff;
+            --mono-inverse-text: #0b0b0b;
+            --mono-shadow: 0 14px 40px rgba(0, 0, 0, 0.50);
+            --mono-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.55);
+
+            --color-primary: #ffffff;
+            --color-on-primary: #0b0b0b;
+            --color-primary-container: #1a1a1a;
+            --color-on-primary-container: #ffffff;
+
+            --color-secondary: #ffffff;
+            --color-on-secondary: #0b0b0b;
+            --color-secondary-container: #1a1a1a;
+            --color-on-secondary-container: #ffffff;
+
+            --color-surface: var(--mono-surface);
+            --color-surface-variant: var(--mono-surface-2);
+            --color-on-surface: var(--mono-text);
+            --color-outline: var(--mono-border);
+            --color-outline-variant: var(--mono-border-strong);
+
+            --color-error: #ff5c5c;
+            --color-error-container: rgba(255, 92, 92, 0.14);
+            --color-on-error-container: #ffdede;
+
+            --color-inverse-surface: var(--mono-inverse-bg);
+            --color-inverse-on-surface: var(--mono-inverse-text);
         }
-        
-        .casual-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
-            background-size: 400% 400%;
-            animation: casualGradient 20s ease infinite;
+
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: radial-gradient(900px 500px at 30% 0%, rgba(0,0,0,0.04), transparent 60%),
+                        radial-gradient(700px 400px at 90% 20%, rgba(0,0,0,0.03), transparent 55%),
+                        var(--mono-bg);
+            color: var(--mono-text);
         }
-        
-        @keyframes casualGradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+
+        html[data-brightness="dark"] body {
+            background: radial-gradient(900px 500px at 30% 0%, rgba(255,255,255,0.05), transparent 60%),
+                        radial-gradient(700px 400px at 90% 20%, rgba(255,255,255,0.04), transparent 55%),
+                        var(--mono-bg);
         }
-        
-        .progress-bar {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            transition: width 0.3s ease;
-            border-radius: 10px;
-        }
-        
-        .hover-lift:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-        }
-        
-        .copy-notification {
-            animation: bounceIn 0.5s ease, fadeOut 0.3s ease 2.7s;
-        }
-        
-        @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        
-        .logo-container {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .logo-container img {
+
+        .container {
             width: 100%;
-            height: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 1.25rem 1rem 6rem;
+        }
+
+        .appbar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(14px);
+            background: color-mix(in srgb, var(--mono-bg) 70%, transparent);
+            border-bottom: 1px solid var(--mono-border);
+        }
+
+        .appbar-inner {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 0;
+        }
+
+        #branding-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid var(--mono-border);
+            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+            background: var(--mono-surface);
             object-fit: cover;
         }
-        
-        body {
-            color: #2d3748;
+
+        .appbar-title {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        
-        .text-primary {
-            color: #667eea;
+
+        .appbar-subtitle {
+            font-size: 0.875rem;
+            color: var(--mono-text-3);
+            margin-top: 0.125rem;
         }
-        
-        .text-accent {
-            color: #f093fb;
+
+        .btn {
+            background-color: var(--color-primary);
+            border: 1px solid var(--color-outline);
+            border-radius: 0.75rem;
+            height: 2.625rem;
+            padding: 0 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--color-on-primary);
+            transition: transform 0.08s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            text-decoration: none;
+            user-select: none;
         }
-        
-        .lang-btn {
-            color: #6b7280;
+
+        .btn:active { transform: translateY(1px); }
+
+        .btn:hover { background-color: var(--color-primary-container); color: var(--color-on-primary-container); border-color: var(--color-outline-variant); }
+
+        .btn-tonal {
+            background-color: var(--color-secondary-container);
+            color: var(--color-on-secondary-container);
+            border-color: var(--color-outline);
+        }
+
+        .btn-tonal:hover { background-color: var(--color-secondary); color: var(--color-on-secondary); }
+
+        .btn-outlined {
+            background-color: transparent;
+            color: var(--mono-text);
+            border-color: var(--mono-border-strong);
+        }
+
+        .btn-outlined:hover { background-color: color-mix(in srgb, var(--mono-text) 6%, transparent); }
+
+        .btn-icon { width: 2.625rem; padding: 0; }
+
+        .card {
+            background-color: var(--mono-surface);
+            border-radius: 1rem;
+            padding: 1.125rem;
+            border: 1px solid var(--mono-border);
+            box-shadow: var(--mono-shadow);
+            color: var(--mono-text);
+            width: 100%;
+        }
+
+        .card h2 {
+            margin: 0;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+        }
+
+        .card-subtitle {
+            margin-top: 0.35rem;
+            color: var(--mono-text-3);
+            font-size: 0.925rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (min-width: 860px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        .kv {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid var(--mono-border);
+        }
+
+        .kv:last-child { border-bottom: none; }
+
+        .kv .k { color: var(--mono-text-3); font-size: 0.9rem; }
+        .kv .v { color: var(--mono-text); font-weight: 600; text-align: right; }
+
+        .badge {
+            padding: 0.2rem 0.65rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            border: 1px solid var(--mono-border);
+            background: var(--mono-surface-2);
+            color: var(--mono-text);
+            white-space: nowrap;
+        }
+
+        .badge-active { border-color: var(--mono-border-strong); }
+        .badge-disabled { border-color: color-mix(in srgb, var(--color-error) 55%, var(--mono-border)); color: var(--color-error); }
+        .badge-limited { border-color: var(--mono-border-strong); }
+        .badge-expired { border-color: var(--mono-border-strong); opacity: 0.85; }
+
+        #error-message {
+            background-color: var(--color-error-container);
+            color: var(--color-on-error-container);
+            border: 1px solid color-mix(in srgb, var(--color-error) 65%, transparent);
+        }
+
+        .navbar {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: color-mix(in srgb, var(--mono-bg) 78%, transparent);
+            backdrop-filter: blur(18px);
+            border-top: 1px solid var(--mono-border);
+            z-index: 30;
+        }
+
+        .navbar-container {
+            max-width: 980px;
+            margin: 0 auto;
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.35rem 0.5rem;
+        }
+
+        .navbar-item {
+            flex: 1;
+            border: 1px solid transparent;
+            border-radius: 1rem;
+            padding: 0.5rem 0.5rem;
             background: transparent;
+            color: var(--mono-text-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
         }
-        
-        .lang-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+
+        .navbar-item-active {
+            background: var(--mono-surface);
+            border-color: var(--mono-border);
+            box-shadow: var(--mono-shadow-2);
+            color: var(--mono-text);
         }
-        
-        .lang-btn:hover:not(.active) {
-            background: rgba(107, 114, 128, 0.1);
+
+        .navbar-item.hidden { display: none; }
+
+        .section.hidden { display: none; }
+
+        .copy-confirmation {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-inverse-surface);
+            color: var(--color-inverse-on-surface);
+            padding: 0.75rem 1rem;
+            border-radius: 0.85rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s, visibility 0.25s;
+            z-index: 1500;
+            box-shadow: var(--mono-shadow-2);
         }
-        
-        /* Mobile Responsive */
-        @media (max-width: 640px) {
-            .casual-card {
-                background: rgba(255, 255, 255, 0.98);
-            }
-            
-            .logo-container {
-                width: 40px;
-                height: 40px;
-            }
+
+        .copy-confirmation.show { opacity: 1; visibility: visible; }
+
+        .modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(0,0,0,0.45);
+            z-index: 1200;
+            padding: 1rem;
         }
+
+        .modal.active { display: grid; }
+
+        .modal-content {
+            width: min(520px, 100%);
+            background: var(--mono-surface);
+            border: 1px solid var(--mono-border);
+            border-radius: 1.25rem;
+            box-shadow: var(--mono-shadow);
+            padding: 1.125rem;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .modal-title { font-weight: 800; letter-spacing: -0.01em; }
+        .modal-close-button { cursor: pointer; font-size: 1.75rem; line-height: 1; color: var(--mono-text-2); }
+
+        #qr-code-container {
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            border: 1px dashed var(--mono-border-strong);
+            border-radius: 1rem;
+            background: var(--mono-surface-2);
+        }
+
+        #settings-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            place-items: center;
+            background: rgba(0,0,0,0.45);
+            z-index: 1250;
+            padding: 1rem;
+        }
+
+        #settings-modal.active { display: grid; }
+
+        .settings-content {
+            width: min(560px, 100%);
+            background: var(--mono-surface);
+            border: 1px solid var(--mono-border);
+            border-radius: 1.25rem;
+            box-shadow: var(--mono-shadow);
+            padding: 1.125rem;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .settings-title { font-weight: 800; letter-spacing: -0.01em; margin: 0; }
+        .settings-close { cursor: pointer; color: var(--mono-text-2); }
+
+        .settings-section { margin-top: 0.85rem; }
+        .settings-label { display: block; font-weight: 700; margin-bottom: 0.5rem; color: var(--mono-text-2); }
+
+        .settings-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .settings-radio-btn {
+            border: 1px solid var(--mono-border);
+            background: var(--mono-surface);
+            color: var(--mono-text);
+            border-radius: 0.85rem;
+            padding: 0.6rem 0.75rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+        }
+
+        .settings-radio-btn.active {
+            border-color: var(--mono-border-strong);
+            background: var(--mono-surface-2);
+        }
+
+        .server-card {
+            border: 1px solid var(--mono-border);
+            border-radius: 1rem;
+            background: var(--mono-surface);
+            padding: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+        .server-header { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.75rem; }
+        .server-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+        .server-flag { font-size: 1.1rem; }
+        .server-name { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .server-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 0,
+                'wght' 500,
+                'GRAD' 0,
+                'opsz' 24;
+        }
+
+        .hidden { display: none !important; }
+
+        .spinner {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: 2px solid var(--mono-border);
+            border-top-color: var(--mono-text);
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="casual-bg min-h-screen">
-    <!-- Header -->
-    <header class="casual-card sticky top-0 z-50 shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="logo-container">
-                        <img src="photo_2026-03-23_18-19-06.jpg" alt="Service Logo">
-                    </div>
-                    <h1 class="text-xl font-bold text-primary" id="service-name">
-                        Remnawave
-                    </h1>
+<body>
+    <div class="appbar">
+        <div class="appbar-inner">
+            <div class="title">
+                <img id="branding-logo" class="hidden" alt="Logo" />
+                <div style="min-width:0">
+                    <div class="appbar-title" data-i18n="page_title">Подписка</div>
+                    <div class="appbar-subtitle" id="appbar-subtitle">Статус и ссылки для подключения</div>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <!-- Language Switcher -->
-                    <div class="casual-light rounded-lg p-1 flex">
-                        <button onclick="setLanguage('ru')" id="lang-ru" class="px-3 py-1 rounded-md text-sm font-medium transition-all lang-btn">
-                            🇷🇺 RU
+            </div>
+            <button id="settings-button" class="btn btn-outlined btn-icon" title="Settings">
+                <span class="material-symbols-outlined">tune</span>
+            </button>
+        </div>
+    </div>
+
+    <main class="container">
+        <div id="loading-spinner" class="card" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+            <div>
+                <div style="font-weight:800" data-i18n="loading_data">Загрузка данных подписки...</div>
+                <div class="card-subtitle">Подождите пару секунд</div>
+            </div>
+            <div class="spinner"></div>
+        </div>
+
+        <div id="error-message" class="card hidden">
+            <h2 data-i18n="error_title">Ошибка</h2>
+            <div id="error-text" class="card-subtitle"></div>
+        </div>
+
+        <section id="status-section" class="section">
+            <div class="grid">
+                <div id="user-info-card" class="card hidden">
+                    <h2 data-i18n="user_info_title">Информация о пользователе</h2>
+                    <div class="card-subtitle">Ваш текущий статус подписки</div>
+
+                    <div style="margin-top:0.85rem">
+                        <div class="kv"><div class="k" data-i18n="username_label">Имя пользователя:</div><div class="v" id="display-username">—</div></div>
+                        <div class="kv"><div class="k" data-i18n="status_label">Статус:</div><div class="v"><span id="display-user-status" class="badge">—</span></div></div>
+                        <div class="kv"><div class="k" data-i18n="expires_at_label">Срок действия:</div><div class="v" id="display-expires-at">—</div></div>
+                        <div class="kv" id="days-left-field"><div class="k" data-i18n="days_left_label">Дней осталось:</div><div class="v" id="display-days-left">—</div></div>
+                        <div class="kv"><div class="k" data-i18n="traffic_label">Трафик:</div><div class="v" id="display-traffic">—</div></div>
+                        <div class="kv" id="traffic-reset-field"><div class="k" data-i18n="traffic_reset_strategy_label">Сброс трафика:</div><div class="v" id="display-traffic-reset-strategy">—</div></div>
+                    </div>
+                </div>
+
+                <div id="subscription-links-card" class="card hidden">
+                    <h2 data-i18n="subscription_links_title">Ссылки подписки</h2>
+                    <div class="card-subtitle">Скопируйте ссылку или откройте QR</div>
+
+                    <div class="flex flex-col gap-4 mt-4">
+                        <div class="server-card">
+                            <div class="server-header">
+                                <div class="server-info">
+                                    <span class="server-name" data-i18n="subscription_link_label">Ссылка подписки</span>
+                                </div>
+                                <div class="server-actions">
+                                    <button class="btn btn-tonal btn-icon" id="copy-subscription-btn" title="Copy">
+                                        <span class="material-symbols-outlined">content_copy</span>
+                                    </button>
+                                    <button class="btn btn-tonal btn-icon" id="qr-subscription-btn" title="QR">
+                                        <span class="material-symbols-outlined">qr_code_2</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="servers-container" class="flex flex-col gap-3"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="apps-section" class="section hidden">
+            <div class="card">
+                <div id="apps-header">
+                    <h2 data-i18n="apps_title">Приложения</h2>
+                    <div class="card-subtitle">Подберём приложение под твою платформу</div>
+                    <div style="margin-top:0.75rem;display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                        <button id="platform-select-button" class="btn btn-outlined">
+                            <span class="material-symbols-outlined">devices</span>
+                            <span data-i18n="choose_platform_title">Выберите платформу</span>
+                            <span class="material-symbols-outlined">arrow_drop_down</span>
                         </button>
-                        <button onclick="setLanguage('en')" id="lang-en" class="px-3 py-1 rounded-md text-sm font-medium transition-all lang-btn">
-                            🇬🇧 EN
-                        </button>
-                    </div>
-                    <span class="px-3 py-2 casual-light rounded-full text-sm font-medium text-primary" id="user-status">
-                        📱 Standard
-                    </span>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8 max-w-4xl">
-        <!-- Status Card -->
-        <div class="casual-card p-6 mb-6 hover-lift">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold mb-2 text-gray-800" data-i18n="connection_status">🌐 Connection Status</h2>
-                    <p class="text-gray-600" data-i18n="subscription_details">Your subscription details & usage</p>
-                </div>
-                <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
-                    <i data-lucide="check" class="w-6 h-6 text-white"></i>
-                </div>
-            </div>
-            
-            <!-- Traffic Progress -->
-            <div class="mb-6">
-                <div class="flex justify-between text-sm mb-2">
-                    <span class="text-gray-600 font-medium" data-i18n="traffic_used">📊 Traffic Used</span>
-                    <span class="text-primary font-bold"><span id="traffic-used-str"></span> / <span id="traffic-limit-str"></span></span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-4 overflow-full shadow-inner">
-                    <div id="traffic-progress-bar" class="progress-bar h-full rounded-full shadow-sm" style="width: 0%"></div>
-                </div>
-            </div>
-            
-            <!-- Expiry Info -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="casual-light p-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-lg flex items-center justify-center">
-                            <i data-lucide="calendar" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600" data-i18n="expires">📅 Expires</p>
-                            <p class="font-bold text-gray-800" id="expires-at"></p>
-                        </div>
                     </div>
                 </div>
-                <div class="casual-light p-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-lg flex items-center justify-center">
-                            <i data-lucide="clock" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <div>
-                            <p class="text-sm text-gray-600" data-i18n="days_left">⏰ Days Left</p>
-                            <p class="font-bold text-gray-800" id="days-left"></p>
-                        </div>
-                    </div>
-                </div>
+                <div id="os-app-display" style="margin-top:1rem"></div>
             </div>
-        </div>
+        </section>
 
-        <!-- Subscription Links -->
-        <div class="casual-card p-6 mb-6 hover-lift">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-gray-800" data-i18n="subscription_links">🔗 Subscription Links</h3>
-                <button onclick="copySubscriptionLink()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-all shadow-lg hover:shadow-xl transform hover:scale-105">
-                    <i data-lucide="copy" class="w-4 h-4 text-white"></i>
-                    <span class="text-white font-medium" data-i18n="copy_link">Copy Link</span>
-                </button>
+        <section id="links-section" class="section hidden">
+            <div class="card">
+                <h2 data-i18n="subscription_links_title">Ссылки подписки</h2>
+                <div class="card-subtitle">Дублирующий раздел для быстрого доступа</div>
+                <div style="margin-top:1rem" id="links-section-body"></div>
             </div>
-            
-            <div id="servers-container" class="space-y-3">
-                <div class="text-center text-gray-500 py-8">Loading servers...</div>
-            </div>
-        </div>
+        </section>
 
-        <!-- Apps Section -->
-        <div id="apps-section" class="casual-card p-6 hover-lift">
-            <h3 class="text-xl font-bold text-gray-800 mb-6" data-i18n="supported_apps">📱 Supported Apps</h3>
-            <div id="apps-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="col-span-full text-center text-gray-500 py-8">Loading apps...</div>
-            </div>
-        </div>
-    </main>
-
-    <!-- QR Code Modal -->
-    <div id="qr-modal" class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="casual-card p-6 max-w-sm w-full shadow-2xl transform transition-all">
-                <div class="flex items-center justify-between mb-4">
-                    <h4 id="qr-title" class="text-lg font-bold text-gray-800" data-i18n="qr_code">📱 QR Code</h4>
-                    <button onclick="closeQRModal()" class="p-2 casual-light rounded-lg hover:bg-red-100 transition-all group">
-                        <i data-lucide="x" class="w-4 h-4 text-gray-600 group-hover:text-red-600"></i>
+        <section id="support-section" class="section hidden">
+            <div class="card">
+                <h2 data-i18n="nav_support">Поддержка</h2>
+                <div class="card-subtitle">Если что-то не работает — мы рядом</div>
+                <div style="margin-top:1rem;display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <button class="btn" onclick="openSupportUrl()">
+                        <span class="material-symbols-outlined">support_agent</span>
+                        <span data-i18n="nav_support">Поддержка</span>
                     </button>
                 </div>
-                <div id="qr-code-container" class="bg-white p-4 rounded-lg shadow-inner"></div>
+            </div>
+        </section>
+    </main>
+
+    <div id="qrModal" class="modal" onclick="if(event.target===this) closeQRModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="qr-modal-title">QR</div>
+                <span class="modal-close-button" onclick="closeQRModal()">&times;</span>
+            </div>
+            <div id="qr-code-container"></div>
+        </div>
+    </div>
+
+    <div id="copy-notification" class="copy-confirmation">
+        <span data-i18n="copied_to_clipboard">Скопировано в буфер обмена!</span>
+    </div>
+
+    <div id="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h3 class="settings-title" data-i18n="settings_title">Настройки</h3>
+                <span class="settings-close material-symbols-outlined" onclick="closeSettingsModal()">close</span>
+            </div>
+
+            <div class="settings-section">
+                <span class="settings-label" data-i18n="language_label">Язык:</span>
+                <div id="language-buttons-container" class="settings-btn-group"></div>
+            </div>
+
+            <div class="settings-section">
+                <span class="settings-label" data-i18n="brightness_label">Яркость:</span>
+                <div class="settings-btn-group">
+                    <button class="settings-radio-btn" data-brightness="light" onclick="selectBrightness('light')">
+                        <span class="material-symbols-outlined">light_mode</span>
+                        <span data-i18n="light_mode">Светлая</span>
+                    </button>
+                    <button class="settings-radio-btn" data-brightness="dark" onclick="selectBrightness('dark')">
+                        <span class="material-symbols-outlined">dark_mode</span>
+                        <span data-i18n="dark_mode">Тёмная</span>
+                    </button>
+                    <button class="settings-radio-btn" data-brightness="auto" onclick="selectBrightness('auto')">
+                        <span class="material-symbols-outlined">brightness_auto</span>
+                        <span data-i18n="auto_mode">Авто</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="settings-section hidden">
+                <span class="settings-label" data-i18n="theme_label">Цветовая схема:</span>
+                <div class="settings-btn-group">
+                    <button class="settings-radio-btn active" data-palette="mono" onclick="selectPalette('mono')">
+                        <span class="material-symbols-outlined">palette</span>
+                        <span>Mono</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Copy Notification -->
-    <div id="copy-notification" class="fixed bottom-4 right-4 casual-card px-4 py-3 shadow-lg hidden copy-notification">
-        <div class="flex items-center space-x-2">
-            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                <i data-lucide="check" class="w-4 h-4 text-white"></i>
-            </div>
-            <span class="text-gray-800 font-medium" data-i18n="copied_to_clipboard">✅ Copied to clipboard!</span>
+    <div class="navbar">
+        <div class="navbar-container">
+            <button id="navbar-status" class="navbar-item navbar-item-active" onclick="setPage('navbar-status','status-section');">
+                <span class="material-symbols-outlined">verified</span>
+                <span data-i18n="nav_status">Статус</span>
+            </button>
+            <button id="navbar-apps" class="navbar-item hidden" onclick="setPage('navbar-apps','apps-section');">
+                <span class="material-symbols-outlined">apps</span>
+                <span data-i18n="nav_apps">Приложения</span>
+            </button>
+            <button id="navbar-links" class="navbar-item" onclick="setPage('navbar-links','links-section');">
+                <span class="material-symbols-outlined">link</span>
+                <span data-i18n="nav_links">Ссылки</span>
+            </button>
+            <button id="navbar-support" class="navbar-item hidden" onclick="setPage('navbar-support','support-section');">
+                <span class="material-symbols-outlined">support_agent</span>
+                <span data-i18n="nav_support">Поддержка</span>
+            </button>
         </div>
     </div>
 
     <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-        
-        // Language system
+        let appsConfig = null;
+        let currentLanguage = 'ru';
+        let currentBrightness = 'auto';
+        let currentTheme = 'mono';
+        let currentSectionId = 'status-section';
+        window.supportUrl = '';
+
+        const availablePalettes = ['mono'];
+
+        const appIcons = {
+            android: `<span class="material-symbols-outlined">android</span>`,
+            ios: `<span class="material-symbols-outlined">phone_iphone</span>`,
+            windows: `<span class="material-symbols-outlined">desktop_windows</span>`,
+            macos: `<span class="material-symbols-outlined">laptop_mac</span>`,
+            linux: `<span class="material-symbols-outlined">terminal</span>`,
+            androidTV: `<span class="material-symbols-outlined">tv</span>`,
+            appleTV: `<span class="material-symbols-outlined">tv</span>`
+        };
+
         const translations = {
             ru: {
-                connection_status: "🌐 Статус подключения",
-                subscription_details: "Детали вашей подписки",
-                traffic_used: "📊 Использовано трафика",
-                expires: "📅 Истекает",
-                days_left: "⏰ Дней осталось",
-                subscription_links: "🔗 Ссылки подписки",
-                copy_link: "Копировать ссылку",
-                supported_apps: "📱 Поддерживаемые приложения",
-                qr_code: "📱 QR-код",
-                copied_to_clipboard: "✅ Скопировано в буфер обмена!",
-                premium: "🌟 Премиум",
-                standard: "📱 Стандарт"
+                page_title: 'Подписка', loading_data: 'Загрузка данных подписки...', error_title: 'Ошибка',
+                user_info_title: 'Информация о пользователе', subscription_links_title: 'Ссылки подписки',
+                apps_title: 'Приложения', choose_platform_title: 'Выберите платформу',
+                username_label: 'Имя пользователя:', status_label: 'Статус:', expires_at_label: 'Срок действия:',
+                days_left_label: 'Дней осталось:', traffic_label: 'Трафик:', traffic_reset_strategy_label: 'Сброс трафика:',
+                subscription_link_label: 'Ссылка подписки', support_link_label: 'Ссылка поддержки', server_label: 'Сервер', copied_to_clipboard: 'Скопировано в буфер обмена!',
+                nav_status: 'Статус', nav_apps: 'Приложения', nav_links: 'Ссылки', nav_support: 'Поддержка', settings_title: 'Настройки',
+                theme_label: 'Цветовая схема:', brightness_label: 'Яркость:', language_label: 'Язык:',
+                light_mode: 'Светлая', dark_mode: 'Тёмная', auto_mode: 'Авто',
+                unlimited: 'Без лимита', permanent: 'Бессрочно', status_active: 'Активен', status_disabled: 'Отключен',
+                status_limited: 'Ограничен', status_expired: 'Истёк', reset_no_reset: 'Без сброса', reset_day: 'Ежедневно',
+                reset_week: 'Еженедельно', reset_month: 'Ежемесячно'
             },
             en: {
-                connection_status: "🌐 Connection Status",
-                subscription_details: "Your subscription details & usage",
-                traffic_used: "📊 Traffic Used",
-                expires: "📅 Expires",
-                days_left: "⏰ Days Left",
-                subscription_links: "🔗 Subscription Links",
-                copy_link: "Copy Link",
-                supported_apps: "📱 Supported Apps",
-                qr_code: "📱 QR Code",
-                copied_to_clipboard: "✅ Copied to clipboard!",
-                premium: "🌟 Premium",
-                standard: "📱 Standard"
+                page_title: 'Subscription', loading_data: 'Loading subscription data...', error_title: 'Error',
+                user_info_title: 'User Information', subscription_links_title: 'Subscription Links',
+                apps_title: 'Applications', choose_platform_title: 'Choose Platform',
+                username_label: 'Username:', status_label: 'Status:', expires_at_label: 'Expires:',
+                days_left_label: 'Days left:', traffic_label: 'Traffic:', traffic_reset_strategy_label: 'Traffic reset:',
+                subscription_link_label: 'Subscription link', support_link_label: 'Support Link', server_label: 'Server', copied_to_clipboard: 'Copied to clipboard!',
+                nav_status: 'Status', nav_apps: 'Apps', nav_links: 'Links', nav_support: 'Support', settings_title: 'Settings',
+                theme_label: 'Color scheme:', brightness_label: 'Brightness:', language_label: 'Language:',
+                light_mode: 'Light', dark_mode: 'Dark', auto_mode: 'Auto',
+                unlimited: 'Unlimited', permanent: 'Permanent', status_active: 'Active', status_disabled: 'Disabled',
+                status_limited: 'Limited', status_expired: 'Expired', reset_no_reset: 'No reset', reset_day: 'Daily',
+                reset_week: 'Weekly', reset_month: 'Monthly'
             }
         };
-        
-        let currentLanguage = localStorage.getItem('language') || 'ru';
-        
-        function setLanguage(lang) {
+
+        function getRandomPalette() { return availablePalettes[Math.floor(Math.random() * availablePalettes.length)]; }
+        function detectSystemTheme() { return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+        function getActualBrightness() { return currentBrightness === 'auto' ? detectSystemTheme() : currentBrightness; }
+        function detectSystemLanguage() { const lang = navigator.language || navigator.userLanguage; return lang?.startsWith('ru') ? 'ru' : 'en'; }
+        function getTranslation(key) { return (translations[currentLanguage] && translations[currentLanguage][key]) || key; }
+
+        function initializeSettings() {
+            const savedLang = localStorage.getItem('lang');
+            currentLanguage = savedLang || detectSystemLanguage();
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                const parts = savedTheme.split('-');
+                currentTheme = parts[0] || 'mono';
+                currentBrightness = parts[1] || 'auto';
+            } else {
+                currentTheme = getRandomPalette();
+                currentBrightness = 'auto';
+            }
+            window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (currentBrightness === 'auto') updateTheme();
+            });
+        }
+
+        function updateTheme() {
+            const brightness = getActualBrightness();
+            document.documentElement.setAttribute('data-brightness', brightness);
+            const meta = document.getElementById('theme-color-meta');
+            if (meta) meta.setAttribute('content', brightness === 'dark' ? '#0b0b0b' : '#ffffff');
+            highlightSettingsButtons();
+        }
+
+        function highlightSettingsButtons() {
+            document.querySelectorAll('.settings-radio-btn[data-brightness]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.brightness === currentBrightness);
+            });
+            document.querySelectorAll('.settings-radio-btn[data-language]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.language === currentLanguage);
+            });
+        }
+
+        function selectBrightness(mode) {
+            currentBrightness = mode;
+            localStorage.setItem('theme', `${currentTheme}-${currentBrightness}`);
+            updateTheme();
+        }
+
+        function selectPalette(palette) {
+            currentTheme = palette;
+            localStorage.setItem('theme', `${currentTheme}-${currentBrightness}`);
+            updateTheme();
+        }
+
+        function selectLanguage(lang) {
             currentLanguage = lang;
-            localStorage.setItem('language', lang);
-            updateTranslations();
-            updateLanguageButtons();
+            localStorage.setItem('lang', lang);
+            applyTranslations();
+            highlightSettingsButtons();
         }
-        
-        function t(key) {
-            return translations[currentLanguage][key] || key;
-        }
-        
-        function updateTranslations() {
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.getAttribute('data-i18n');
-                element.textContent = t(key);
+
+        function setPage(navbarItemId, sectionId) {
+            ['status-section', 'apps-section', 'links-section', 'support-section'].forEach(id => document.getElementById(id)?.classList.add('hidden'));
+            document.getElementById(sectionId)?.classList.remove('hidden');
+
+            document.querySelectorAll('.navbar-item').forEach(item => {
+                item.classList.remove('navbar-item-active');
             });
+            document.getElementById(navbarItemId)?.classList.add('navbar-item-active');
+
+            currentSectionId = sectionId;
+
+            if (sectionId === 'links-section') {
+                const body = document.getElementById('links-section-body');
+                const card = document.getElementById('subscription-links-card');
+                body.innerHTML = '';
+                if (card) body.appendChild(card.cloneNode(true));
+            }
+
+            if (sectionId === 'apps-section' && window.appsData) {
+                setTimeout(() => displayAppsSection(), 50);
+            }
         }
-        
-        function updateLanguageButtons() {
-            document.querySelectorAll('.lang-btn').forEach(btn => {
-                btn.classList.remove('active');
+
+        window.setPage = setPage;
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const translation = getTranslation(key);
+                el.textContent = translation;
             });
-            document.getElementById(`lang-${currentLanguage}`).classList.add('active');
+            updateDisplayedDataTranslations();
         }
-        
-        // Data loading from Remnawave - similar to original example
-        let subscriptionData = null;
-        
-        // Decode and parse data (like in original)
+
+        async function loadAppsConfig() {
+            if (appsConfig !== null) return appsConfig;
+            try {
+                const response = await fetch('/assets/app-config.json');
+                if (!response.ok) throw new Error('Config file not found');
+                const text = await response.text();
+                if (text.trim().startsWith('<')) throw new Error('Received HTML instead of JSON');
+                appsConfig = JSON.parse(text);
+                return appsConfig;
+            } catch (error) {
+                appsConfig = { platforms: {}, config: {} };
+                return appsConfig;
+            }
+        }
+
+        function setupLanguageSelector(config) {
+            const container = document.getElementById('language-buttons-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const locales = ['en', 'ru'];
+            if (config?.config?.additionalLocales) {
+                config.config.additionalLocales.forEach(locale => {
+                    if (!locales.includes(locale)) locales.push(locale);
+                });
+            }
+
+            const langNames = { en: 'English', ru: 'Русский', fa: 'فارسی', zh: '中文' };
+
+            locales.forEach(lang => {
+                const button = document.createElement('button');
+                button.className = 'settings-radio-btn';
+                button.dataset.language = lang;
+                button.onclick = () => selectLanguage(lang);
+                button.innerHTML = `<span class="material-symbols-outlined">language</span><span>${langNames[lang] || lang}</span>`;
+                container.appendChild(button);
+            });
+
+            highlightSettingsButtons();
+        }
+
         function decodeAndParseData(encodedData) {
             try {
                 return JSON.parse(atob(encodedData));
             } catch (error) {
-                console.error('Error decoding/parsing data:', error);
                 throw new Error('Failed to process panel data: ' + error.message);
             }
         }
-        
-        // Parse traffic values (same as original)
-        function parseTraffic(str) {
-            if (!str) return 0;
-            const match = str.match(/^([\d.]+)\s*(\w+)$/);
-            if (!match) return 0;
-            const val = parseFloat(match[1]);
-            const unit = match[2].toLowerCase();
-            const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
-            units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
-            return val * (units[unit] || 1);
-        }
-        
-        // Format API data (same as original)
-        function formatApiData(apiData) {
-            if (!apiData.response?.isFound) {
-                throw new Error('Подписка не найдена');
+
+        async function loadSubscriptionData() {
+            try {
+                const appsConfigPromise = loadAppsConfig();
+                const encodedPanelData = '<%= panelData %>';
+                const decodedData = decodeAndParseData(encodedPanelData);
+                const loadedAppsConfig = await appsConfigPromise;
+
+                setupLanguageSelector(loadedAppsConfig);
+                const formattedData = formatApiData(decodedData, loadedAppsConfig);
+                displayData(formattedData);
+            } catch (error) {
+                displayError('Ошибка при загрузке данных подписки: ' + error.message);
             }
-            
+        }
+
+        function formatDate(isoString) {
+            try {
+                const d = new Date(isoString);
+                return d.toLocaleDateString(currentLanguage === 'ru' ? 'ru-RU' : 'en-US', { year: 'numeric', month: 'short', day: '2-digit' });
+            } catch {
+                return isoString;
+            }
+        }
+
+        function formatApiData(apiData, appsConfig) {
+            if (!apiData.response?.isFound) throw new Error('Подписка не найдена');
             const { response } = apiData;
             const { user } = response;
-            
-            // Process servers/links (same as original)
+
+            const parseTraffic = (str) => {
+                if (!str) return 0;
+                const match = str.match(/^([\d.]+)\s*(\w+)$/);
+                if (!match) return 0;
+                const val = parseFloat(match[1]);
+                const unit = match[2].toLowerCase();
+                const units = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3, tb: 1024 ** 4, pb: 1024 ** 5 };
+                units.kib = units.kb; units.mib = units.mb; units.gib = units.gb; units.tib = units.tb; units.pib = units.pb;
+                return val * (units[unit] || 1);
+            };
+
             const servers = (response.links || []).map(link => {
-                let serverName = 'Server';
+                let serverName = getTranslation('server_label');
                 let flag = '';
                 const hashMatch = link.match(/#(.+)$/);
                 if (hashMatch) {
@@ -368,7 +984,7 @@
                 }
                 return { name: serverName, flag, fullUrl: link };
             });
-            
+
             return {
                 username: user.username,
                 user_status: user.userStatus,
@@ -377,228 +993,337 @@
                 traffic_used: parseTraffic(user.trafficUsed),
                 traffic_limit: parseTraffic(user.trafficLimit),
                 traffic_used_str: user.trafficUsed || '0 B',
-                traffic_limit_str: user.trafficLimit || 'Unlimited',
+                traffic_limit_str: user.trafficLimit || getTranslation('unlimited'),
                 traffic_reset_strategy: user.trafficLimitStrategy,
                 subscription_url: response.subscriptionUrl,
-                servers: servers,
-                apps: [] // Will be loaded separately
+                cryptoLink: response.happ?.cryptoLink,
+                servers,
+                apps: appsConfig
             };
         }
-        
-        // Load subscription data (same as original)
-        async function loadSubscriptionData() {
-            try {
-                // First try API endpoints directly
-                await loadFromAPI();
-                
-            } catch (error) {
-                console.error('Data loading error:', error);
-                showErrorState();
-            }
-        }
-        
-        // Fallback to API loading
-        async function loadFromAPI() {
-            try {
-                // Try different endpoints that Remnawave might use
-                const endpoints = [
-                    '/api/user/info',
-                    '/api/subscription',
-                    '/user/info',
-                    '/subscription/info',
-                    '/api/sub',
-                    '/sub/info',
-                    '/panel/api/info',
-                    '/api/panel/info'
-                ];
-                
-                for (const endpoint of endpoints) {
-                    try {
-                        console.log(`Trying endpoint: ${endpoint}`);
-                        const response = await fetch(endpoint);
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log(`Success with ${endpoint}:`, data);
-                            subscriptionData = formatApiData(data);
-                            updateUI();
-                            return;
-                        }
-                    } catch (e) {
-                        console.log(`Failed ${endpoint}:`, e.message);
-                        continue;
-                    }
+
+        function applyBranding(appsConfig) {
+            const branding = appsConfig?.config?.branding;
+            if (!branding) return;
+
+            if (branding.logoUrl) {
+                const logoEl = document.getElementById('branding-logo');
+                if (logoEl) {
+                    logoEl.onload = () => {
+                        logoEl.classList.remove('hidden');
+                        logoEl.style.display = 'inline-block';
+                        logoEl.style.visibility = 'visible';
+                    };
+                    logoEl.onerror = () => {
+                        logoEl.classList.add('hidden');
+                        logoEl.style.display = 'none';
+                    };
+                    logoEl.src = branding.logoUrl;
                 }
-                
-                throw new Error('No API endpoint available');
-                
-            } catch (error) {
-                console.error('API loading failed:', error);
-                showErrorState();
             }
-        }
-        
-        function showErrorState() {
-            document.getElementById('traffic-used-str').textContent = 'Error';
-            document.getElementById('traffic-limit-str').textContent = 'Error';
-            document.getElementById('expires-at').textContent = 'Error';
-            document.getElementById('days-left').textContent = 'Error';
-            document.getElementById('servers-container').innerHTML = '<div class="text-center text-gray-500 py-8">Failed to load data</div>';
-            document.getElementById('apps-container').innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Failed to load data</div>';
-        }
-        
-        // Parse traffic values for progress bar
-        function parseTrafficForBar(trafficStr) {
-            if (!trafficStr || trafficStr === '0 B' || trafficStr === 'Error') return 0;
-            const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
-            if (!match) return parseFloat(trafficStr) || 0;
-            const val = parseFloat(match[1]);
-            const unit = match[2].toLowerCase();
-            const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
-            return val * (units[unit] || 1);
-        }
-        
-        function updateUI() {
-            if (!subscriptionData) return;
-            
-            // Update service name and user status
-            document.getElementById('service-name').textContent = subscriptionData.username || 'Remnawave';
-            document.getElementById('user-status').textContent = subscriptionData.user_status === 'premium' ? '🌟 Premium' : '📱 Standard';
-            
-            // Update traffic info
-            document.getElementById('traffic-used-str').textContent = subscriptionData.traffic_used_str;
-            document.getElementById('traffic-limit-str').textContent = subscriptionData.traffic_limit_str;
-            
-            // Update progress bar
-            const used = parseTrafficForBar(subscriptionData.traffic_used_str);
-            const limit = parseTrafficForBar(subscriptionData.traffic_limit_str);
-            const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
-            document.getElementById('traffic-progress-bar').style.width = percentage + '%';
-            
-            // Update expiry info
-            document.getElementById('expires-at').textContent = subscriptionData.expires_at || 'Unknown';
-            document.getElementById('days-left').textContent = subscriptionData.days_left ? `${subscriptionData.days_left} days` : 'Unknown';
-            
-            // Update servers dynamically
-            updateServersDisplay();
-        }
-        
-        function updateServersDisplay() {
-            const container = document.getElementById('servers-container');
-            
-            if (subscriptionData.servers && subscriptionData.servers.length > 0) {
-                container.innerHTML = '';
-                subscriptionData.servers.forEach(server => {
-                    const serverCard = document.createElement('div');
-                    serverCard.className = 'casual-light p-4 hover:shadow-md transition-all';
-                    serverCard.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
-                                    <i data-lucide="server" class="w-5 h-5 text-white"></i>
+
+            if (branding.supportUrl) {
+                window.supportUrl = branding.supportUrl;
+                const supportNavBtn = document.getElementById('navbar-support');
+                if (supportNavBtn) supportNavBtn.classList.remove('hidden');
+
+                setTimeout(() => {
+                    const subscriptionCard = document.getElementById('subscription-links-card');
+                    const linksContainer = subscriptionCard?.querySelector('.flex.flex-col.gap-4.mt-4');
+                    if (linksContainer && !linksContainer.querySelector('[data-support-link]')) {
+                        const supportCard = document.createElement('div');
+                        supportCard.className = 'server-card';
+                        supportCard.setAttribute('data-support-link', 'true');
+                        supportCard.innerHTML = `
+                            <div class="server-header">
+                                <div class="server-info">
+                                    <span class="server-name" data-i18n="support_link_label">${getTranslation('support_link_label')}</span>
                                 </div>
-                                <div>
-                                    <p class="font-bold text-gray-800">${server.flag} ${server.name}</p>
-                                    <p class="text-sm text-gray-600">📍 Server</p>
+                                <div class="server-actions">
+                                    <button class="btn btn-tonal btn-icon" onclick="copyToClipboard('${branding.supportUrl}')">
+                                        <span class="material-symbols-outlined">content_copy</span>
+                                    </button>
+                                    <button class="btn btn-tonal btn-icon" onclick="showQRCode('${branding.supportUrl}', getTranslation('support_link_label') || 'Support Link')">
+                                        <span class="material-symbols-outlined">qr_code_2</span>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="flex space-x-2">
-                                <button onclick="copyToClipboard('${server.fullUrl}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
-                                    <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
-                                </button>
-                                <button onclick="showQRCode('${server.fullUrl}', '${server.name}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
-                                    <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
-                                </button>
+                        `;
+                        linksContainer.appendChild(supportCard);
+                    }
+                }, 100);
+            }
+        }
+
+        function displayError(message) {
+            document.getElementById('loading-spinner')?.classList.add('hidden');
+            const err = document.getElementById('error-message');
+            const txt = document.getElementById('error-text');
+            if (txt) txt.textContent = message;
+            if (err) err.classList.remove('hidden');
+        }
+
+        function displayData(data) {
+            document.getElementById('loading-spinner')?.classList.add('hidden');
+
+            window.currentUserStatus = data.user_status;
+            window.currentExpiresAt = data.expires_at;
+            window.currentTrafficData = {
+                used: data.traffic_used,
+                limit: data.traffic_limit,
+                used_str: data.traffic_used_str,
+                limit_str: data.traffic_limit_str
+            };
+            window.currentTrafficResetStrategy = data.traffic_reset_strategy;
+            window.subscriptionUrlForCopy = data.subscription_url;
+
+            applyBranding(data.apps);
+
+            document.getElementById('display-username').textContent = data.username || '—';
+
+            const userInfoCard = document.getElementById('user-info-card');
+            userInfoCard?.classList.remove('hidden');
+            document.getElementById('subscription-links-card')?.classList.remove('hidden');
+
+            const copyBtn = document.getElementById('copy-subscription-btn');
+            const qrBtn = document.getElementById('qr-subscription-btn');
+            if (copyBtn) copyBtn.onclick = () => copyToClipboard(window.subscriptionUrlForCopy);
+            if (qrBtn) qrBtn.onclick = () => showQRCode(window.subscriptionUrlForCopy, getTranslation('subscription_link_label'));
+
+            displayServers(data.servers);
+
+            if (data.user_status === 'ACTIVE' && data.apps?.platforms) {
+                const platforms = data.apps.platforms;
+                const hasApps = Object.keys(platforms).some(p => platforms[p]?.length > 0);
+                if (hasApps) {
+                    window.appsData = data;
+                    document.getElementById('navbar-apps')?.classList.remove('hidden');
+                } else {
+                    document.getElementById('navbar-apps')?.classList.add('hidden');
+                }
+            } else {
+                document.getElementById('navbar-apps')?.classList.add('hidden');
+            }
+
+            applyTranslations();
+        }
+
+        function updateDisplayedDataTranslations() {
+            const statusEl = document.getElementById('display-user-status');
+            if (statusEl && window.currentUserStatus) {
+                const statusKey = `status_${String(window.currentUserStatus).toLowerCase()}`;
+                statusEl.textContent = getTranslation(statusKey);
+                statusEl.className = `badge badge-${String(window.currentUserStatus).toLowerCase()}`;
+            }
+
+            const expiresEl = document.getElementById('display-expires-at');
+            if (expiresEl && window.currentExpiresAt) {
+                const isPermanent = new Date(window.currentExpiresAt).getFullYear() >= 2099;
+                expiresEl.textContent = isPermanent ? getTranslation('permanent') : formatDate(window.currentExpiresAt);
+                const daysField = document.getElementById('days-left-field');
+                if (daysField) daysField.style.display = isPermanent ? 'none' : 'flex';
+            }
+
+            const daysLeftEl = document.getElementById('display-days-left');
+            if (daysLeftEl && window.appsData) daysLeftEl.textContent = window.appsData.days_left;
+
+            const trafficEl = document.getElementById('display-traffic');
+            if (trafficEl && window.currentTrafficData) {
+                const isUnlimited = window.currentTrafficData.limit === 0;
+                trafficEl.textContent = isUnlimited ? getTranslation('unlimited') : `${window.currentTrafficData.used_str} / ${window.currentTrafficData.limit_str}`;
+                const resetField = document.getElementById('traffic-reset-field');
+                if (resetField) resetField.style.display = isUnlimited ? 'none' : 'flex';
+            }
+
+            const resetEl = document.getElementById('display-traffic-reset-strategy');
+            if (resetEl && window.currentTrafficResetStrategy) {
+                resetEl.textContent = getTranslation(`reset_${String(window.currentTrafficResetStrategy).toLowerCase()}`);
+            }
+        }
+
+        function copyToClipboard(text) {
+            if (!text) return;
+            navigator.clipboard?.writeText(text).then(() => {
+                const n = document.getElementById('copy-notification');
+                n?.classList.add('show');
+                setTimeout(() => n?.classList.remove('show'), 1400);
+            }).catch(() => {});
+        }
+
+        function showQRCode(text, title) {
+            if (!text) return;
+            const modal = document.getElementById('qrModal');
+            const container = document.getElementById('qr-code-container');
+            const titleEl = document.getElementById('qr-modal-title');
+            if (titleEl) titleEl.textContent = title || 'QR';
+            if (container) container.innerHTML = '';
+            modal?.classList.add('active');
+            if (container && window.QRCode) {
+                new QRCode(container, { text, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M });
+            }
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal')?.classList.remove('active');
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settings-modal')?.classList.add('active');
+            highlightSettingsButtons();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal')?.classList.remove('active');
+        }
+
+        function openSupportUrl() {
+            if (!window.supportUrl) return;
+            try {
+                window.Telegram?.WebApp?.openLink?.(window.supportUrl);
+            } catch {}
+            window.open(window.supportUrl, '_blank', 'noopener,noreferrer');
+        }
+
+        function displayServers(servers) {
+            const container = document.getElementById('servers-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            (servers || []).forEach((server) => {
+                const card = document.createElement('div');
+                card.className = 'server-card';
+                card.innerHTML = `
+                    <div class="server-header">
+                        <div class="server-info">
+                            <span class="server-flag">${server.flag || ''}</span>
+                            <span class="server-name">${server.name || getTranslation('server_label')}</span>
+                        </div>
+                        <div class="server-actions"></div>
+                    </div>
+                `;
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'btn btn-tonal btn-icon';
+                copyBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>';
+                copyBtn.onclick = () => copyToClipboard(server.fullUrl);
+
+                const qrBtn = document.createElement('button');
+                qrBtn.className = 'btn btn-tonal btn-icon';
+                qrBtn.innerHTML = '<span class="material-symbols-outlined">qr_code_2</span>';
+                qrBtn.onclick = () => showQRCode(server.fullUrl, `QR: ${server.flag || ''} ${server.name || ''}`);
+
+                card.querySelector('.server-actions')?.append(copyBtn, qrBtn);
+                container.appendChild(card);
+            });
+        }
+
+        function displayAppsSection() {
+            const data = window.appsData;
+            if (!data?.apps?.platforms) {
+                const display = document.getElementById('os-app-display');
+                if (display) display.innerHTML = '';
+                return;
+            }
+
+            const platforms = data.apps.platforms;
+            const availablePlatforms = Object.keys(platforms).filter(p => platforms[p]?.length > 0);
+            if (availablePlatforms.length === 0) return;
+
+            let currentPlatform = availablePlatforms[0];
+            const ua = navigator.userAgent;
+            if (/windows/i.test(ua) && availablePlatforms.includes('windows')) currentPlatform = 'windows';
+            else if (/macintosh|mac os x/i.test(ua) && availablePlatforms.includes('macos')) currentPlatform = 'macos';
+            else if (/linux/i.test(ua) && !/android/i.test(ua) && availablePlatforms.includes('linux')) currentPlatform = 'linux';
+            else if (/android/i.test(ua)) currentPlatform = availablePlatforms.includes('android') ? 'android' : currentPlatform;
+            else if (/iPad|iPhone|iPod/.test(ua) && availablePlatforms.includes('ios')) currentPlatform = 'ios';
+
+            const platformSelectButton = document.getElementById('platform-select-button');
+            const platformNames = { ios: 'iOS', android: 'Android', windows: 'Windows', macos: 'macOS', linux: 'Linux', androidTV: 'Android TV', appleTV: 'Apple TV' };
+
+            const selectPlatform = (platform) => {
+                const display = document.getElementById('os-app-display');
+                currentPlatform = platform;
+                if (platformSelectButton) {
+                    platformSelectButton.innerHTML = `<span class="material-symbols-outlined">devices</span>${appIcons[platform] || ''}<span>${platformNames[platform] || platform}</span><span class="material-symbols-outlined">arrow_drop_down</span>`;
+                }
+
+                if (!display) return;
+                display.innerHTML = '';
+                const apps = platforms[platform] || [];
+                apps.forEach(app => {
+                    const el = document.createElement('div');
+                    el.className = 'server-card';
+                    el.innerHTML = `
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;width:100%">
+                            <div style="min-width:0">
+                                <div style="font-weight:800">${app?.name || 'App'}</div>
+                                <div style="color:var(--mono-text-3);font-size:0.9rem">${app?.description || ''}</div>
+                            </div>
+                            <div style="display:flex;gap:0.5rem;flex-shrink:0">
+                                ${app?.downloadUrl ? `<a class="btn" href="${app.downloadUrl}" target="_blank" rel="noopener noreferrer"><span class="material-symbols-outlined">download</span><span data-i18n="download_app">Download</span></a>` : ''}
                             </div>
                         </div>
                     `;
-                    container.appendChild(serverCard);
+                    display.appendChild(el);
                 });
-                lucide.createIcons();
-            } else {
-                container.innerHTML = '<div class="text-center text-gray-500 py-8">No servers available</div>';
-            }
+
+                applyTranslations();
+            };
+
+            platformSelectButton.onclick = () => {
+                const modal = document.createElement('div');
+                modal.className = 'modal active';
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                const content = document.createElement('div');
+                content.className = 'modal-content';
+                content.innerHTML = `
+                    <div class="modal-header">
+                        <div class="modal-title">${getTranslation('choose_platform_title')}</div>
+                        <span class="modal-close-button">&times;</span>
+                    </div>
+                    <div class="flex flex-col gap-2" id="platform-list"></div>
+                `;
+                content.querySelector('.modal-close-button').onclick = () => modal.remove();
+
+                const list = content.querySelector('#platform-list');
+                availablePlatforms.forEach(p => {
+                    const b = document.createElement('button');
+                    b.className = 'btn btn-outlined';
+                    b.style.justifyContent = 'space-between';
+                    b.innerHTML = `<span style="display:flex;align-items:center;gap:0.5rem">${appIcons[p] || ''}<span>${platformNames[p] || p}</span></span><span class="material-symbols-outlined">chevron_right</span>`;
+                    b.onclick = () => { selectPlatform(p); modal.remove(); };
+                    list.appendChild(b);
+                });
+
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+            };
+
+            selectPlatform(currentPlatform);
         }
-        
-        // Progress bar calculation
-        document.addEventListener('DOMContentLoaded', function() {
-            updateTranslations();
-            updateLanguageButtons();
-            
-            // Load subscription data like in original
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeSettings();
+            applyTranslations();
+            updateTheme();
             loadSubscriptionData();
-            
-            // Initialize Lucide icons after DOM is ready
-            lucide.createIcons();
+            document.getElementById('settings-button')?.addEventListener('click', openSettingsModal);
         });
-        
-        // Copy subscription link
-        function copySubscriptionLink() {
-            const subscriptionUrl = subscriptionData ? subscriptionData.subscription_url : window.location.href;
-            copyToClipboard(subscriptionUrl);
-        }
-        
-        // Copy to clipboard function
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showCopyNotification();
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-            });
-        }
-        
-        // Show copy notification
-        function showCopyNotification() {
-            const notification = document.getElementById('copy-notification');
-            notification.classList.remove('hidden');
-            
-            setTimeout(() => {
-                notification.classList.add('hidden');
-            }, 3000);
-        }
-        
-        // Show QR Code
-        function showQRCode(url, title) {
-            const modal = document.getElementById('qr-modal');
-            const titleEl = document.getElementById('qr-title');
-            const container = document.getElementById('qr-code-container');
-            
-            titleEl.textContent = title || 'QR Code';
-            container.innerHTML = '';
-            
-            new QRCode(container, {
-                text: url,
-                width: 200,
-                height: 200,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            modal.classList.remove('hidden');
-        }
-        
-        // Close QR Modal
-        function closeQRModal() {
-            const modal = document.getElementById('qr-modal');
-            modal.classList.add('hidden');
-        }
-        
-        // Close modal on background click
-        document.getElementById('qr-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeQRModal();
-            }
-        });
-        
-        // Re-initialize icons after dynamic content
-        const observer = new MutationObserver(() => {
-            lucide.createIcons();
-        });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+
+        window.copyToClipboard = copyToClipboard;
+        window.showQRCode = showQRCode;
+        window.closeQRModal = closeQRModal;
+        window.openSettingsModal = openSettingsModal;
+        window.closeSettingsModal = closeSettingsModal;
+        window.openSupportUrl = openSupportUrl;
+        window.selectPalette = selectPalette;
+        window.selectBrightness = selectBrightness;
+        window.selectLanguage = selectLanguage;
+    </script>
+
+    <script type="module" defer>
+        import { polyfillCountryFlagEmojis } from "https://cdn.skypack.dev/country-flag-emoji-polyfill";
+        polyfillCountryFlagEmojis();
     </script>
 </body>
 </html>
