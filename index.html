@@ -1119,30 +1119,6 @@
         .download-title { font-weight: 900; }
         .download-subtitle { color: var(--mono-text-3); font-size: 0.9rem; }
 
-        /* Декоративные элементы для карточек трафика */
-        .traffic-card {
-            position: relative;
-            overflow: hidden;
-        }
-
-        .traffic-card::before {
-            content: '📊';
-            position: absolute;
-            bottom: -20px;
-            right: 10px;
-            font-size: 6rem;
-            opacity: 0.03;
-            transform: rotate(15deg);
-            pointer-events: none;
-            filter: grayscale(100%);
-        }
-
-        .traffic-card-2::before {
-            content: '⏳';
-            bottom: -15px;
-            right: 15px;
-        }
-
         /* Улучшенные бейджи */
         .badge {
             position: relative;
@@ -1253,7 +1229,7 @@
             <div class="card-subtitle">Статус, срок действия и трафик</div>
 
             <div class="grid" style="margin-top:1rem;">
-                <div class="card traffic-card traffic-card-2" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
+                <div class="card" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">
                         <div style="display:flex;align-items:center;gap:0.5rem;">
                             <span class="material-symbols-outlined" style="color:var(--color-primary);font-size:1.2rem;">calendar_today</span>
@@ -1264,7 +1240,7 @@
                     <div id="expires-at" style="margin-top:0.5rem;font-size:1.1rem;font-weight:900;background:linear-gradient(90deg, var(--color-gradient-start), var(--color-gradient-end));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">—</div>
                 </div>
 
-                <div class="card traffic-card" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
+                <div class="card" style="box-shadow:none;border-color:var(--mono-border);background:var(--mono-surface-2);">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">
                         <div style="display:flex;align-items:center;gap:0.5rem;">
                             <span class="material-symbols-outlined" style="color:var(--color-accent);font-size:1.2rem;">dataset</span>
