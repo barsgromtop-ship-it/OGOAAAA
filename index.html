@@ -324,64 +324,33 @@
         // Data loading and display functions
         let subscriptionData = null;
         
-        async function loadSubscriptionData() {
-            try {
-                // Load data from the same endpoint as the reference
-                const response = await fetch('/api/subscription');
-                const data = await response.json();
-                
-                subscriptionData = processSubscriptionData(data);
-                updateUI();
-            } catch (error) {
-                console.error('Failed to load subscription data:', error);
-                // Fallback to template variables if API fails
-                loadFromTemplate();
-            }
+        // Load data from template variables (Go templates)
+        function loadFromTemplate() {
+            const data = {
+                username: '{{.User.Username}}',
+                user_status: '{{.User.UserStatus}}',
+                expires_at: '{{.User.ExpiresAt}}',
+                days_left: {{.User.DaysLeft}},
+                traffic_used_str: '{{.User.DataUsed}}',
+                traffic_limit_str: '{{.User.DataLimit}}',
+                subscription_url: '{{.SubscriptionUrl}}',
+                servers: [],
+                apps: []
+            };
+            
+            subscriptionData = data;
+            updateUI();
         }
         
-        function processSubscriptionData(response) {
-            const user = response.user || {};
-            
-            // Parse traffic values
-            function parseTraffic(trafficStr) {
-                if (!trafficStr) return 0;
-                const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
-                if (!match) return 0;
-                const val = parseFloat(match[1]);
-                const unit = match[2].toLowerCase();
-                const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
-                units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
-                return val * (units[unit] || 1);
-            };
-            
-            // Process servers
-            const servers = (response.links || []).map(link => {
-                let serverName = 'Server';
-                let flag = '';
-                const hashMatch = link.match(/#(.+)$/);
-                if (hashMatch) {
-                    const hashPart = decodeURIComponent(hashMatch[1]);
-                    serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
-                    const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
-                    if (flagMatch) flag = flagMatch[0];
-                }
-                return { name: serverName, flag, fullUrl: link };
-            });
-            
-            return {
-                username: user.username,
-                user_status: user.userStatus,
-                expires_at: user.expiresAt,
-                days_left: user.daysLeft,
-                traffic_used: parseTraffic(user.trafficUsed),
-                traffic_limit: parseTraffic(user.trafficLimit),
-                traffic_used_str: user.trafficUsed || '0 B',
-                traffic_limit_str: user.trafficLimit || 'Unlimited',
-                traffic_reset_strategy: user.trafficLimitStrategy,
-                subscription_url: response.subscriptionUrl,
-                servers,
-                apps: response.apps || []
-            };
+        // Parse traffic values for progress bar
+        function parseTraffic(trafficStr) {
+            if (!trafficStr || trafficStr === '{{.User.DataLimit}}') return 0;
+            const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
+            if (!match) return parseFloat(trafficStr) || 0;
+            const val = parseFloat(match[1]);
+            const unit = match[2].toLowerCase();
+            const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
+            return val * (units[unit] || 1);
         }
         
         function updateUI() {
@@ -392,9 +361,9 @@
             document.getElementById('traffic-limit-str').textContent = subscriptionData.traffic_limit_str;
             
             // Update progress bar
-            const percentage = subscriptionData.traffic_limit > 0 
-                ? Math.min((subscriptionData.traffic_used / subscriptionData.traffic_limit) * 100, 100)
-                : 0;
+            const used = parseTraffic(subscriptionData.traffic_used_str);
+            const limit = parseTraffic(subscriptionData.traffic_limit_str);
+            const percentage = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
             document.getElementById('traffic-progress-bar').style.width = percentage + '%';
             
             // Update expiry info
@@ -411,6 +380,11 @@
         function displayServers(servers) {
             const container = document.getElementById('servers-container');
             container.innerHTML = '';
+            
+            if (servers.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-8">No servers available</div>';
+                return;
+            }
             
             servers.forEach(server => {
                 const serverCard = document.createElement('div');
@@ -447,6 +421,11 @@
             const container = document.getElementById('apps-container');
             container.innerHTML = '';
             
+            if (apps.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No apps available</div>';
+                return;
+            }
+            
             apps.forEach(app => {
                 const appCard = document.createElement('div');
                 appCard.className = 'casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105';
@@ -463,32 +442,13 @@
             lucide.createIcons();
         }
         
-        function loadFromTemplate() {
-            // Fallback to template variables
-            const expiresAt = '{{.User.ExpiresAt}}';
-            const daysLeft = '{{.User.DaysLeft}}';
-            const dataUsed = '{{.User.DataUsed}}';
-            const dataLimit = '{{.User.DataLimit}}';
-            
-            document.getElementById('expires-at').textContent = expiresAt;
-            document.getElementById('days-left').textContent = daysLeft + ' days';
-            document.getElementById('traffic-used-str').textContent = dataUsed;
-            document.getElementById('traffic-limit-str').textContent = dataLimit;
-            
-            // Calculate progress from template data
-            const used = parseFloat(dataUsed) || 0;
-            const limit = parseFloat(dataLimit) || 1;
-            const percentage = Math.min((used / limit) * 100, 100);
-            document.getElementById('traffic-progress-bar').style.width = percentage + '%';
-        }
-        
         // Progress bar calculation
         document.addEventListener('DOMContentLoaded', function() {
             updateTranslations();
             updateLanguageButtons();
             
-            // Try to load from API first, fallback to template
-            loadSubscriptionData();
+            // Load from Go templates directly
+            loadFromTemplate();
         });
         
         // Copy subscription link
