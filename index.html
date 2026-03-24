@@ -103,10 +103,17 @@
             --mono-shadow: 0 14px 40px rgba(0, 0, 0, 0.08);
             --mono-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.10);
 
-            --color-primary: #0b0b0b;
+            --color-primary: #2196F3;
+            --color-primary-light: #64B5F6;
+            --color-primary-dark: #1976D2;
+            --color-accent: #9C27B0;
+            --color-accent-light: #BA68C8;
+            --color-gradient-start: #1E88E5;
+            --color-gradient-end: #8E24AA;
+
             --color-on-primary: #ffffff;
-            --color-primary-container: #f0f0f0;
-            --color-on-primary-container: #0b0b0b;
+            --color-primary-container: #E3F2FD;
+            --color-on-primary-container: #1565C0;
 
             --color-secondary: #1c1c1c;
             --color-on-secondary: #ffffff;
@@ -141,10 +148,17 @@
             --mono-shadow: 0 14px 40px rgba(0, 0, 0, 0.50);
             --mono-shadow-2: 0 10px 24px rgba(0, 0, 0, 0.55);
 
-            --color-primary: #ffffff;
+            --color-primary: #64B5F6;
+            --color-primary-light: #90CAF9;
+            --color-primary-dark: #42A5F5;
+            --color-accent: #BA68C8;
+            --color-accent-light: #CE93D8;
+            --color-gradient-start: #42A5F5;
+            --color-gradient-end: #AB47BC;
+
             --color-on-primary: #0b0b0b;
-            --color-primary-container: #1a1a1a;
-            --color-on-primary-container: #ffffff;
+            --color-primary-container: #1565C0;
+            --color-on-primary-container: #90CAF9;
 
             --color-secondary: #ffffff;
             --color-on-secondary: #0b0b0b;
@@ -169,15 +183,15 @@
         body {
             margin: 0;
             font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-            background: radial-gradient(900px 500px at 30% 0%, rgba(0,0,0,0.04), transparent 60%),
-                        radial-gradient(700px 400px at 90% 20%, rgba(0,0,0,0.03), transparent 55%),
+            background: radial-gradient(900px 500px at 30% 0%, rgba(30, 136, 229, 0.15), transparent 60%),
+                        radial-gradient(700px 400px at 90% 20%, rgba(142, 36, 170, 0.12), transparent 55%),
                         var(--mono-bg);
             color: var(--mono-text);
         }
 
         html[data-brightness="dark"] body {
-            background: radial-gradient(900px 500px at 30% 0%, rgba(255,255,255,0.05), transparent 60%),
-                        radial-gradient(700px 400px at 90% 20%, rgba(255,255,255,0.04), transparent 55%),
+            background: radial-gradient(900px 500px at 30% 0%, rgba(30, 136, 229, 0.25), transparent 60%),
+                        radial-gradient(700px 400px at 90% 20%, rgba(142, 36, 170, 0.20), transparent 55%),
                         var(--mono-bg);
         }
 
@@ -215,12 +229,14 @@
         }
 
         #branding-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            border: 1px solid var(--mono-border);
-            box-shadow: 0 6px 14px rgba(0,0,0,0.08);
-            background: var(--mono-surface);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+            background-origin: border-box;
+            background-clip: border-box, padding-box;
+            box-shadow: 0 6px 14px rgba(33, 150, 243, 0.35);
             object-fit: cover;
         }
 
@@ -240,15 +256,15 @@
         }
 
         .btn {
-            background-color: var(--color-primary);
-            border: 1px solid var(--color-outline);
+            background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+            border: none;
             border-radius: 0.75rem;
             height: 2.625rem;
             padding: 0 1rem;
             font-size: 0.95rem;
             font-weight: 600;
             color: var(--color-on-primary);
-            transition: transform 0.08s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+            transition: transform 0.08s ease, box-shadow 0.25s ease, filter 0.25s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -256,11 +272,12 @@
             cursor: pointer;
             text-decoration: none;
             user-select: none;
+            box-shadow: 0 4px 14px rgba(33, 150, 243, 0.35);
         }
 
         .btn:active { transform: translateY(1px); }
 
-        .btn:hover { background-color: var(--color-primary-container); color: var(--color-on-primary-container); border-color: var(--color-outline-variant); }
+        .btn:hover { filter: brightness(1.1); box-shadow: 0 6px 20px rgba(33, 150, 243, 0.45); }
 
         .btn-tonal {
             background-color: var(--color-secondary-container);
@@ -565,29 +582,29 @@
             margin: 1.25rem auto 0.75rem;
             cursor: pointer;
             transition: transform 0.12s ease, box-shadow 0.25s ease, background-color 0.25s ease;
-            border: 1px solid var(--mono-border-strong);
-            background: radial-gradient(60% 60% at 30% 20%, color-mix(in srgb, var(--mono-text) 12%, transparent), transparent 60%),
-                        radial-gradient(80% 80% at 60% 70%, color-mix(in srgb, var(--mono-text) 6%, transparent), transparent 60%),
-                        var(--mono-surface);
+            border: 3px solid transparent;
+            background: linear-gradient(135deg, var(--color-gradient-start), var(--color-gradient-end));
+            background-origin: border-box;
+            background-clip: border-box, padding-box;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.10);
+            box-shadow: 0 20px 60px rgba(33, 150, 243, 0.35);
             user-select: none;
         }
 
         html[data-brightness="dark"] .power-button {
-            box-shadow: 0 24px 70px rgba(0,0,0,0.55);
+            box-shadow: 0 24px 70px rgba(33, 150, 243, 0.45);
         }
 
         .power-button:active { transform: scale(0.985); }
 
         .power-button.active {
-            box-shadow: 0 24px 70px rgba(0,0,0,0.16);
+            box-shadow: 0 24px 70px rgba(33, 150, 243, 0.55);
         }
 
         html[data-brightness="dark"] .power-button.active {
-            box-shadow: 0 26px 78px rgba(0,0,0,0.70);
+            box-shadow: 0 26px 78px rgba(33, 150, 243, 0.65);
         }
 
         .power-symbol {
@@ -603,7 +620,7 @@
             content: '';
             width: 8px;
             height: 52%;
-            background: var(--mono-text);
+            background: linear-gradient(180deg, var(--color-on-primary), color-mix(in srgb, var(--color-on-primary) 70%, transparent));
             position: absolute;
             top: 0;
             border-radius: 999px;
@@ -613,7 +630,7 @@
             content: '';
             width: 100%;
             height: 100%;
-            border: 8px solid var(--mono-text);
+            border: 8px solid var(--color-on-primary);
             border-radius: 999px;
             position: absolute;
             clip-path: inset(24% 0 0 0);
@@ -666,9 +683,9 @@
     <main class="container" id="app" style="opacity:0;transition:opacity 0.25s ease;">
         <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
             <div class="title" style="gap:0.75rem;">
-                <img id="branding-logo" class="hidden" alt="Logo" />
+                <img id="branding-logo" src="photo_2026-03-23_18-19-06.jpg" alt="MAMA VPN Logo" />
                 <div style="min-width:0">
-                    <div class="appbar-title" data-i18n="page_title">Подписка</div>
+                    <div class="appbar-title" data-i18n="page_title">MAMA VPN</div>
                     <div class="appbar-subtitle" id="appbar-subtitle">Нажмите кнопку, чтобы добавить подписку в Hiddify/Clash/Happ</div>
                 </div>
             </div>
@@ -937,31 +954,6 @@
             }, 1000);
         }
 
-        function applyBrandingFromAppsConfig(config) {
-            const branding = config?.config?.branding;
-            if (!branding) return;
-            if (branding.logoUrl) {
-                const logoEl = document.getElementById('branding-logo');
-                if (logoEl) {
-                    logoEl.onload = () => { logoEl.classList.remove('hidden'); };
-                    logoEl.onerror = () => { logoEl.classList.add('hidden'); };
-                    logoEl.src = branding.logoUrl;
-                }
-            }
-        }
-
-        async function loadAppsConfig() {
-            try {
-                const response = await fetch('/assets/app-config.json');
-                if (!response.ok) return null;
-                const text = await response.text();
-                if (text.trim().startsWith('<')) return null;
-                return JSON.parse(text);
-            } catch {
-                return null;
-            }
-        }
-
         function normalizePanelData(panelData) {
             if (panelData && panelData.response && typeof panelData.response === 'object') return panelData.response;
             return panelData;
@@ -1006,7 +998,7 @@
             if (app) app.style.opacity = '1';
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             initializeSettings();
             updateTheme();
 
@@ -1018,9 +1010,6 @@
                     handlePowerClick();
                 }
             });
-
-            const appsConfig = await loadAppsConfig();
-            applyBrandingFromAppsConfig(appsConfig);
 
             let panelData = '<%- panelData %>';
             try {
