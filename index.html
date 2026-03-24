@@ -395,6 +395,124 @@
             transform: translate(-50%, -50%);
         }
 
+        /* Декоративные элементы в стиле логотипа */
+        .logo-decoration {
+            position: fixed;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.08;
+            will-change: transform, opacity;
+        }
+
+        .logo-shield {
+            top: 15%;
+            left: 8%;
+            width: 120px;
+            height: 140px;
+            background: linear-gradient(180deg, rgba(30, 136, 229, 0.3), rgba(30, 136, 229, 0.1));
+            clip-path: polygon(50% 0%, 100% 15%, 85% 100%, 15% 100%, 0% 15%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .logo-orbit {
+            top: 60%;
+            right: 5%;
+            width: 200px;
+            height: 200px;
+            border: 2px solid rgba(30, 136, 229, 0.2);
+            border-radius: 50%;
+            animation: spin-slow 30s linear infinite;
+        }
+
+        .logo-orbit::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: rgba(30, 136, 229, 0.4);
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        .logo-dots {
+            bottom: 10%;
+            left: 15%;
+            width: 100px;
+            height: 100px;
+        }
+
+        .logo-dots::before,
+        .logo-dots::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, rgba(30, 136, 229, 0.4), transparent);
+            border-radius: 50%;
+        }
+
+        .logo-dots::before {
+            top: 20px;
+            left: 30px;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        .logo-dots::after {
+            top: 50px;
+            left: 60px;
+            animation: glow-pulse 3s ease-in-out infinite 0.5s;
+        }
+
+        .logo-network {
+            top: 40%;
+            right: 25%;
+            width: 150px;
+            height: 150px;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(30, 136, 229, 0.15) 2px, transparent 2px),
+                radial-gradient(circle at 20% 30%, rgba(30, 136, 229, 0.1) 2px, transparent 2px),
+                radial-gradient(circle at 80% 70%, rgba(30, 136, 229, 0.1) 2px, transparent 2px);
+            animation: float 10s ease-in-out infinite;
+        }
+
+        .logo-lines {
+            top: 25%;
+            right: 15%;
+            width: 180px;
+            height: 180px;
+            opacity: 0.06;
+        }
+
+        .logo-lines::before,
+        .logo-lines::after {
+            content: '';
+            position: absolute;
+            background: linear-gradient(135deg, rgba(30, 136, 229, 0.3), transparent);
+            border-radius: 50%;
+        }
+
+        .logo-lines::before {
+            width: 2px;
+            height: 120px;
+            top: 20px;
+            left: 50%;
+            transform: rotate(30deg);
+        }
+
+        .logo-lines::after {
+            width: 2px;
+            height: 100px;
+            top: 40px;
+            left: 60px;
+            transform: rotate(-20deg);
+        }
+
+        html[data-brightness="dark"] .logo-decoration {
+            opacity: 0.12;
+        }
+
         html[data-brightness="dark"] .particle {
             background: radial-gradient(circle, rgba(30, 136, 229, 0.5), transparent);
         }
@@ -1261,7 +1379,7 @@
                 <div class="power-symbol"></div>
             </div>
             <div class="power-panel">
-                <div class="power-status" id="powerStatus">СИСТЕМА ГОТОВА К ЗАПУСКУ</div>
+                <div class="power-status" id="powerStatus">НАЖМИТЕ ДЛЯ ПОДКЛЮЧЕНИЯ</div>
             </div>
         </div>
 
@@ -1560,5 +1678,12 @@
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
+    
+    <!-- Декоративные элементы в стиле логотипа -->
+    <div class="logo-decoration logo-shield"></div>
+    <div class="logo-decoration logo-orbit"></div>
+    <div class="logo-decoration logo-dots"></div>
+    <div class="logo-decoration logo-network"></div>
+    <div class="logo-decoration logo-lines"></div>
 </body>
 </html>
