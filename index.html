@@ -133,10 +133,10 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="logo-container">
-                        <img src="photo_2026-03-23_18-19-06.jpg" alt="{{.Profile.Configuration.Name}} Logo">
+                        <img src="photo_2026-03-23_18-19-06.jpg" alt="Service Logo">
                     </div>
-                    <h1 class="text-xl font-bold text-primary">
-                        {{.Profile.Configuration.Name}}
+                    <h1 class="text-xl font-bold text-primary" id="service-name">
+                        Remnawave
                     </h1>
                 </div>
                 <div class="flex items-center space-x-3">
@@ -149,8 +149,8 @@
                             🇬🇧 EN
                         </button>
                     </div>
-                    <span class="px-3 py-2 casual-light rounded-full text-sm font-medium text-primary" data-i18n="premium">
-                        {{if .User.Premium}}🌟 Premium{{else}}📱 Standard{{end}}
+                    <span class="px-3 py-2 casual-light rounded-full text-sm font-medium text-primary" id="user-status">
+                        📱 Standard
                     </span>
                 </div>
             </div>
@@ -220,31 +220,7 @@
             </div>
             
             <div id="servers-container" class="space-y-3">
-                {{range .Links}}
-                <div class="casual-light p-4 hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
-                                <i data-lucide="server" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-800">{{.Flag}} {{.Name}}</p>
-                                <p class="text-sm text-gray-600">📍 Server</p>
-                            </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="copyToClipboard('{{.URL}}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
-                                <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
-                            </button>
-                            <button onclick="showQRCode('{{.URL}}', '{{.Name}}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
-                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {{else}}
-                <div class="text-center text-gray-500 py-8">No servers available</div>
-                {{end}}
+                <div class="text-center text-gray-500 py-8">Loading servers...</div>
             </div>
         </div>
 
@@ -252,16 +228,7 @@
         <div id="apps-section" class="casual-card p-6 hover-lift">
             <h3 class="text-xl font-bold text-gray-800 mb-6" data-i18n="supported_apps">📱 Supported Apps</h3>
             <div id="apps-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {{range .Apps}}
-                <div class="casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105">
-                    <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-{{.Color}}-400 to-{{.Color}}-600 rounded-lg flex items-center justify-center shadow">
-                        <i data-lucide="{{.Icon}}" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-800">{{.Name}}</p>
-                </div>
-                {{else}}
-                <div class="col-span-full text-center text-gray-500 py-8">No apps available</div>
-                {{end}}
+                <div class="col-span-full text-center text-gray-500 py-8">Loading apps...</div>
             </div>
         </div>
     </main>
@@ -354,28 +321,153 @@
             document.getElementById(`lang-${currentLanguage}`).classList.add('active');
         }
         
-        // Data loading and display functions
+        // Data loading from Remnawave API
         let subscriptionData = null;
         
-        // Load data from template variables (Go templates)
-        function loadFromTemplate() {
-            const data = {
-                username: '{{.User.Username}}',
-                user_status: '{{.User.UserStatus}}',
-                expires_at: '{{.User.ExpiresAt}}',
-                days_left: {{.User.DaysLeft}},
-                traffic_used_str: '{{.User.DataUsed}}',
-                traffic_limit_str: '{{.User.DataLimit}}',
-                subscription_url: '{{.SubscriptionUrl}}'
+        // Load data from Remnawave API
+        async function loadSubscriptionData() {
+            try {
+                // Try to load from Remnawave API endpoint
+                const response = await fetch('/sub/{{.User.ID}}/info');
+                if (!response.ok) {
+                    throw new Error('API response not ok');
+                }
+                
+                const data = await response.json();
+                subscriptionData = processSubscriptionData(data);
+                updateUI();
+            } catch (error) {
+                console.error('Failed to load from API:', error);
+                // Try alternative endpoints
+                tryAlternativeEndpoints();
+            }
+        }
+        
+        async function tryAlternativeEndpoints() {
+            const endpoints = [
+                '/api/user/info',
+                '/api/subscription',
+                '/user/info',
+                '/subscription/info'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    if (response.ok) {
+                        const data = await response.json();
+                        subscriptionData = processSubscriptionData(data);
+                        updateUI();
+                        return;
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            
+            // If all endpoints fail, try to get data from page context
+            loadFromPageContext();
+        }
+        
+        function processSubscriptionData(response) {
+            // Handle different API response formats
+            const user = response.user || response;
+            
+            // Parse traffic values
+            function parseTraffic(trafficStr) {
+                if (!trafficStr) return 0;
+                const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
+                if (!match) return parseFloat(trafficStr) || 0;
+                const val = parseFloat(match[1]);
+                const unit = match[2].toLowerCase();
+                const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
+                units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
+                return val * (units[unit] || 1);
             };
             
-            subscriptionData = data;
-            updateUI();
+            // Process servers/links
+            const servers = (response.links || response.servers || []).map(link => {
+                let serverName = 'Server';
+                let flag = '';
+                
+                if (typeof link === 'string') {
+                    const hashMatch = link.match(/#(.+)$/);
+                    if (hashMatch) {
+                        const hashPart = decodeURIComponent(hashMatch[1]);
+                        serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
+                        const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
+                        if (flagMatch) flag = flagMatch[0];
+                    }
+                    return { name: serverName, flag, fullUrl: link };
+                } else if (typeof link === 'object') {
+                    return {
+                        name: link.name || link.server || 'Server',
+                        flag: link.flag || '',
+                        fullUrl: link.url || link.link || link.fullUrl || ''
+                    };
+                }
+            }).filter(server => server.fullUrl);
+            
+            return {
+                username: user.username || user.name || '',
+                user_status: user.status || user.userStatus || 'active',
+                expires_at: user.expire || user.expiresAt || user.expiry || '',
+                days_left: user.days_left || user.daysLeft || 0,
+                traffic_used_str: user.traffic_used || user.dataUsed || '0 B',
+                traffic_limit_str: user.traffic_limit || user.dataLimit || 'Unlimited',
+                subscription_url: response.subscription_url || response.subscriptionUrl || '',
+                servers: servers,
+                apps: response.apps || []
+            };
+        }
+        
+        function loadFromPageContext() {
+            // Try to get data from global variables or page context
+            try {
+                // Check if data is available in global scope
+                if (window.userData) {
+                    subscriptionData = processSubscriptionData(window.userData);
+                    updateUI();
+                    return;
+                }
+                
+                // Try to extract from page title or other elements
+                const title = document.querySelector('title')?.textContent || '';
+                const bodyText = document.body.textContent || '';
+                
+                // Create minimal data structure
+                subscriptionData = {
+                    username: 'User',
+                    user_status: 'active',
+                    expires_at: 'Unknown',
+                    days_left: 0,
+                    traffic_used_str: '0 B',
+                    traffic_limit_str: 'Unknown',
+                    subscription_url: window.location.href,
+                    servers: [],
+                    apps: []
+                };
+                
+                updateUI();
+            } catch (error) {
+                console.error('Failed to load from page context:', error);
+                // Show error state
+                showErrorState();
+            }
+        }
+        
+        function showErrorState() {
+            document.getElementById('traffic-used-str').textContent = 'Error';
+            document.getElementById('traffic-limit-str').textContent = 'Error';
+            document.getElementById('expires-at').textContent = 'Error';
+            document.getElementById('days-left').textContent = 'Error';
+            document.getElementById('servers-container').innerHTML = '<div class="text-center text-gray-500 py-8">Failed to load data</div>';
+            document.getElementById('apps-container').innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">Failed to load data</div>';
         }
         
         // Parse traffic values for progress bar
         function parseTraffic(trafficStr) {
-            if (!trafficStr || trafficStr === '{{.User.DataLimit}}') return 0;
+            if (!trafficStr || trafficStr === '0 B' || trafficStr === 'Error') return 0;
             const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
             if (!match) return parseFloat(trafficStr) || 0;
             const val = parseFloat(match[1]);
@@ -400,6 +492,67 @@
             // Update expiry info
             document.getElementById('expires-at').textContent = subscriptionData.expires_at || 'Unknown';
             document.getElementById('days-left').textContent = subscriptionData.days_left ? `${subscriptionData.days_left} days` : 'Unknown';
+            
+            // Update servers dynamically
+            updateServersDisplay();
+            
+            // Update apps dynamically
+            updateAppsDisplay();
+        }
+        
+        function updateServersDisplay() {
+            const container = document.getElementById('servers-container');
+            
+            if (subscriptionData.servers && subscriptionData.servers.length > 0) {
+                container.innerHTML = '';
+                subscriptionData.servers.forEach(server => {
+                    const serverCard = document.createElement('div');
+                    serverCard.className = 'casual-light p-4 hover:shadow-md transition-all';
+                    serverCard.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
+                                    <i data-lucide="server" class="w-5 h-5 text-white"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800">${server.flag} ${server.name}</p>
+                                    <p class="text-sm text-gray-600">📍 Server</p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="copyToClipboard('${server.fullUrl}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
+                                    <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
+                                </button>
+                                <button onclick="showQRCode('${server.fullUrl}', '${server.name}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
+                                    <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(serverCard);
+                });
+                lucide.createIcons();
+            }
+        }
+        
+        function updateAppsDisplay() {
+            const container = document.getElementById('apps-container');
+            
+            if (subscriptionData.apps && subscriptionData.apps.length > 0) {
+                container.innerHTML = '';
+                subscriptionData.apps.forEach(app => {
+                    const appCard = document.createElement('div');
+                    appCard.className = 'casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105';
+                    appCard.innerHTML = `
+                        <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-${app.color || 'blue'}-400 to-${app.color || 'blue'}-600 rounded-lg flex items-center justify-center shadow">
+                            <i data-lucide="${app.icon || 'smartphone'}" class="w-6 h-6 text-white"></i>
+                        </div>
+                        <p class="text-sm font-bold text-gray-800">${app.name || 'App'}</p>
+                    `;
+                    container.appendChild(appCard);
+                });
+                lucide.createIcons();
+            }
         }
         
         // Progress bar calculation
@@ -407,8 +560,8 @@
             updateTranslations();
             updateLanguageButtons();
             
-            // Load from Go templates directly
-            loadFromTemplate();
+            // Load from Remnawave API
+            loadSubscriptionData();
             
             // Initialize Lucide icons after DOM is ready
             lucide.createIcons();
@@ -416,7 +569,7 @@
         
         // Copy subscription link
         function copySubscriptionLink() {
-            const subscriptionUrl = subscriptionData ? subscriptionData.subscription_url : '{{.SubscriptionUrl}}';
+            const subscriptionUrl = subscriptionData ? subscriptionData.subscription_url : window.location.href;
             copyToClipboard(subscriptionUrl);
         }
         
