@@ -175,10 +175,10 @@
             <div class="mb-6">
                 <div class="flex justify-between text-sm mb-2">
                     <span class="text-gray-600 font-medium" data-i18n="traffic_used">📊 Traffic Used</span>
-                    <span class="text-primary font-bold">{{.User.DataUsed}} / {{.User.DataLimit}}</span>
+                    <span class="text-primary font-bold"><span id="traffic-used-str"></span> / <span id="traffic-limit-str"></span></span>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-4 overflow-full shadow-inner">
-                    <div class="progress-bar h-full rounded-full shadow-sm" style="width: {{if .User.DataLimit}}{{.User.DataUsed}}{{else}}0{{end}}%"></div>
+                    <div id="traffic-progress-bar" class="progress-bar h-full rounded-full shadow-sm" style="width: 0%"></div>
                 </div>
             </div>
             
@@ -191,7 +191,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600" data-i18n="expires">📅 Expires</p>
-                            <p class="font-bold text-gray-800">{{.User.ExpiresAt}}</p>
+                            <p class="font-bold text-gray-800" id="expires-at"></p>
                         </div>
                     </div>
                 </div>
@@ -202,7 +202,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-gray-600" data-i18n="days_left">⏰ Days Left</p>
-                            <p class="font-bold text-gray-800">{{.User.DaysLeft}} days</p>
+                            <p class="font-bold text-gray-800" id="days-left"></p>
                         </div>
                     </div>
                 </div>
@@ -219,49 +219,18 @@
                 </button>
             </div>
             
-            <div class="space-y-3">
-                {{range .Links}}
-                <div class="casual-light p-4 hover:shadow-md transition-all">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
-                                <i data-lucide="server" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-800">{{.Name}}</p>
-                                <p class="text-sm text-gray-600">📍 {{.Location}}</p>
-                            </div>
-                        </div>
-                        <div class="flex space-x-2">
-                            <button onclick="copyToClipboard('{{.URL}}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
-                                <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
-                            </button>
-                            <button onclick="showQRCode('{{.URL}}', '{{.Name}}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
-                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                {{end}}
+            <div id="servers-container" class="space-y-3">
+                <!-- Server links will be dynamically added here -->
             </div>
         </div>
 
         <!-- Apps Section -->
-        {{if .Apps}}
-        <div class="casual-card p-6 hover-lift">
+        <div id="apps-section" class="casual-card p-6 hover-lift">
             <h3 class="text-xl font-bold text-gray-800 mb-6" data-i18n="supported_apps">📱 Supported Apps</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {{range .Apps}}
-                <div class="casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105">
-                    <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-{{.Color}}-400 to-{{.Color}}-600 rounded-lg flex items-center justify-center shadow">
-                        <i data-lucide="{{.Icon}}" class="w-6 h-6 text-white"></i>
-                    </div>
-                    <p class="text-sm font-bold text-gray-800">{{.Name}}</p>
-                </div>
-                {{end}}
+            <div id="apps-container" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Apps will be dynamically added here -->
             </div>
         </div>
-        {{end}}
     </main>
 
     <!-- QR Code Modal -->
@@ -352,30 +321,179 @@
             document.getElementById(`lang-${currentLanguage}`).classList.add('active');
         }
         
+        // Data loading and display functions
+        let subscriptionData = null;
+        
+        async function loadSubscriptionData() {
+            try {
+                // Load data from the same endpoint as the reference
+                const response = await fetch('/api/subscription');
+                const data = await response.json();
+                
+                subscriptionData = processSubscriptionData(data);
+                updateUI();
+            } catch (error) {
+                console.error('Failed to load subscription data:', error);
+                // Fallback to template variables if API fails
+                loadFromTemplate();
+            }
+        }
+        
+        function processSubscriptionData(response) {
+            const user = response.user || {};
+            
+            // Parse traffic values
+            function parseTraffic(trafficStr) {
+                if (!trafficStr) return 0;
+                const match = trafficStr.match(/^([\d.]+)\s*([a-z]+)$/i);
+                if (!match) return 0;
+                const val = parseFloat(match[1]);
+                const unit = match[2].toLowerCase();
+                const units = { 'b': 1, 'kb': 1024, 'mb': 1024**2, 'gb': 1024**3, 'tb': 1024**4, 'pb': 1024**5 };
+                units['kib'] = units.kb; units['mib'] = units.mb; units['gib'] = units.gb; units['tib'] = units.tb; units['pib'] = units.pb;
+                return val * (units[unit] || 1);
+            };
+            
+            // Process servers
+            const servers = (response.links || []).map(link => {
+                let serverName = 'Server';
+                let flag = '';
+                const hashMatch = link.match(/#(.+)$/);
+                if (hashMatch) {
+                    const hashPart = decodeURIComponent(hashMatch[1]);
+                    serverName = hashPart.replace(/[\u{1F1E6}-\u{1F1FF}]{2}/gu, '').trim() || serverName;
+                    const flagMatch = hashPart.match(/[\u{1F1E6}-\u{1F1FF}]{2}/gu);
+                    if (flagMatch) flag = flagMatch[0];
+                }
+                return { name: serverName, flag, fullUrl: link };
+            });
+            
+            return {
+                username: user.username,
+                user_status: user.userStatus,
+                expires_at: user.expiresAt,
+                days_left: user.daysLeft,
+                traffic_used: parseTraffic(user.trafficUsed),
+                traffic_limit: parseTraffic(user.trafficLimit),
+                traffic_used_str: user.trafficUsed || '0 B',
+                traffic_limit_str: user.trafficLimit || 'Unlimited',
+                traffic_reset_strategy: user.trafficLimitStrategy,
+                subscription_url: response.subscriptionUrl,
+                servers,
+                apps: response.apps || []
+            };
+        }
+        
+        function updateUI() {
+            if (!subscriptionData) return;
+            
+            // Update traffic info
+            document.getElementById('traffic-used-str').textContent = subscriptionData.traffic_used_str;
+            document.getElementById('traffic-limit-str').textContent = subscriptionData.traffic_limit_str;
+            
+            // Update progress bar
+            const percentage = subscriptionData.traffic_limit > 0 
+                ? Math.min((subscriptionData.traffic_used / subscriptionData.traffic_limit) * 100, 100)
+                : 0;
+            document.getElementById('traffic-progress-bar').style.width = percentage + '%';
+            
+            // Update expiry info
+            document.getElementById('expires-at').textContent = subscriptionData.expires_at || 'Unknown';
+            document.getElementById('days-left').textContent = subscriptionData.days_left ? `${subscriptionData.days_left} days` : 'Unknown';
+            
+            // Update servers
+            displayServers(subscriptionData.servers);
+            
+            // Update apps
+            displayApps(subscriptionData.apps);
+        }
+        
+        function displayServers(servers) {
+            const container = document.getElementById('servers-container');
+            container.innerHTML = '';
+            
+            servers.forEach(server => {
+                const serverCard = document.createElement('div');
+                serverCard.className = 'casual-light p-4 hover:shadow-md transition-all';
+                serverCard.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow">
+                                <i data-lucide="server" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800">${server.flag} ${server.name}</p>
+                                <p class="text-sm text-gray-600">📍 Server</p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="copyToClipboard('${server.fullUrl}')" class="p-2 casual-light rounded-lg hover:bg-blue-100 transition-all group">
+                                <i data-lucide="copy" class="w-4 h-4 text-gray-600 group-hover:text-blue-600"></i>
+                            </button>
+                            <button onclick="showQRCode('${server.fullUrl}', '${server.name}')" class="p-2 casual-light rounded-lg hover:bg-purple-100 transition-all group">
+                                <i data-lucide="qr-code" class="w-4 h-4 text-gray-600 group-hover:text-purple-600"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(serverCard);
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+        
+        function displayApps(apps) {
+            const container = document.getElementById('apps-container');
+            container.innerHTML = '';
+            
+            apps.forEach(app => {
+                const appCard = document.createElement('div');
+                appCard.className = 'casual-light p-4 text-center hover:shadow-lg transition-all cursor-pointer transform hover:scale-105';
+                appCard.innerHTML = `
+                    <div class="w-12 h-12 mx-auto mb-2 bg-gradient-to-br from-${app.color || 'blue'}-400 to-${app.color || 'blue'}-600 rounded-lg flex items-center justify-center shadow">
+                        <i data-lucide="${app.icon || 'smartphone'}" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <p class="text-sm font-bold text-gray-800">${app.name || 'App'}</p>
+                `;
+                container.appendChild(appCard);
+            });
+            
+            // Re-initialize icons
+            lucide.createIcons();
+        }
+        
+        function loadFromTemplate() {
+            // Fallback to template variables
+            const expiresAt = '{{.User.ExpiresAt}}';
+            const daysLeft = '{{.User.DaysLeft}}';
+            const dataUsed = '{{.User.DataUsed}}';
+            const dataLimit = '{{.User.DataLimit}}';
+            
+            document.getElementById('expires-at').textContent = expiresAt;
+            document.getElementById('days-left').textContent = daysLeft + ' days';
+            document.getElementById('traffic-used-str').textContent = dataUsed;
+            document.getElementById('traffic-limit-str').textContent = dataLimit;
+            
+            // Calculate progress from template data
+            const used = parseFloat(dataUsed) || 0;
+            const limit = parseFloat(dataLimit) || 1;
+            const percentage = Math.min((used / limit) * 100, 100);
+            document.getElementById('traffic-progress-bar').style.width = percentage + '%';
+        }
+        
         // Progress bar calculation
         document.addEventListener('DOMContentLoaded', function() {
             updateTranslations();
             updateLanguageButtons();
             
-            const dataUsed = {{.User.DataUsed}};
-            const dataLimit = {{.User.DataLimit}};
-            
-            if (dataLimit && dataUsed) {
-                // Parse traffic values (assuming they're in GB format)
-                const used = parseFloat(dataUsed) || 0;
-                const limit = parseFloat(dataLimit) || 1;
-                const percentage = Math.min((used / limit) * 100, 100);
-                
-                const progressBar = document.querySelector('.progress-bar');
-                if (progressBar) {
-                    progressBar.style.width = percentage + '%';
-                }
-            }
+            // Try to load from API first, fallback to template
+            loadSubscriptionData();
         });
         
         // Copy subscription link
         function copySubscriptionLink() {
-            const subscriptionUrl = '{{.SubscriptionUrl}}';
+            const subscriptionUrl = subscriptionData ? subscriptionData.subscription_url : '{{.SubscriptionUrl}}';
             copyToClipboard(subscriptionUrl);
         }
         
